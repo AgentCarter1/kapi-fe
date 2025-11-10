@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { AccountProfile } from './features/account/components/AccountProfile';
 import { LoginForm } from './features/auth/components/LoginForm';
 import { SignUpForm } from './features/auth/components/SignUpForm';
 import { VerifyAccountForm } from './features/auth/components/VerifyAccountForm';
@@ -21,9 +22,17 @@ const Dashboard = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate('/auth/login');
+  const handleLogout = async () => {
+    try {
+      const { logout: logoutApi } = await import('./features/auth/api/authApi');
+      await logoutApi();
+      dispatch(logout());
+      navigate('/auth/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      dispatch(logout());
+      navigate('/auth/login');
+    }
   };
   
   return (
@@ -34,10 +43,19 @@ const Dashboard = () => {
             <div className="flex items-center">
               <h1 className="text-xl font-bold text-gray-900">KAPI Dashboard</h1>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => navigate('/account')}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Account
+              </button>
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
               >
                 Logout
               </button>
@@ -73,6 +91,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/account"
+          element={
+            <ProtectedRoute>
+              <AccountProfile />
             </ProtectedRoute>
           }
         />

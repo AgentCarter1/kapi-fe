@@ -49,3 +49,26 @@ export const verifyAccount = async (
   return response.data.data!;
 };
 
+/**
+ * Logout user - invalidates access and refresh tokens
+ */
+export const logout = async (): Promise<void> => {
+  await api.post('/auth/logout');
+};
+
+/**
+ * Refresh access token using refresh token
+ */
+export const refreshToken = async (token: string): Promise<LoginResponse> => {
+  const response = await api.post<ApiResponse<LoginResponse>>(
+    '/auth/refresh-token',
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return response.data.data!;
+};
+

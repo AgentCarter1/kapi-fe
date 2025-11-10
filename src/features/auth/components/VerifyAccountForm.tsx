@@ -1,22 +1,48 @@
 import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { verifyAccount } from '../api/authApi';
 import { useAppDispatch } from '../../../store/hooks';
 import { setCredentials } from '../../../store/slices/authSlice';
 import type { VerifyAccountRequest } from '../../../types';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface LocationState {
-  verifyAccountToken: string;
-  email: string;
+  verifyAccountToken?: string;
+  email?: string;
 }
 
 export const VerifyAccountForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const dispatch = useAppDispatch();
   const state = location.state as LocationState;
+  
+  // Get token from URL query parameter or location state
+  const [verifyToken, setVerifyToken] = useState<string>('');
+  const [userEmail, setUserEmail] = useState<string>('');
+
+  useEffect(() => {
+    const tokenFromUrl = searchParams.get('token');
+    const tokenFromState = state?.verifyAccountToken;
+    const emailFromState = state?.email || '';
+
+    const token = tokenFromUrl || tokenFromState || localStorage.getItem('verifyToken') || '';
+    
+    if (!token) {
+      navigate('/auth/sign-up', { replace: true });
+      return;
+    }
+
+    setVerifyToken(token);
+    setUserEmail(emailFromState);
+
+    // Clean up localStorage after reading
+    if (tokenFromUrl && localStorage.getItem('verifyToken')) {
+      localStorage.removeItem('verifyToken');
+    }
+  }, [searchParams, state, navigate]);
   
   const {
     register,
@@ -24,16 +50,9 @@ export const VerifyAccountForm = () => {
     formState: { errors },
   } = useForm<VerifyAccountRequest>();
 
-  // Redirect if no token
-  useEffect(() => {
-    if (!state || !state.verifyAccountToken) {
-      navigate('/auth/sign-up', { replace: true });
-    }
-  }, [state, navigate]);
-
   const verifyMutation = useMutation({
     mutationFn: (data: VerifyAccountRequest) => 
-      verifyAccount(state.verifyAccountToken, data),
+      verifyAccount(verifyToken, data),
     onSuccess: (data) => {
       // Save tokens to Redux and localStorage (same as login)
       dispatch(setCredentials({
@@ -54,7 +73,7 @@ export const VerifyAccountForm = () => {
     verifyMutation.mutate(data);
   };
 
-  if (!state || !state.verifyAccountToken) {
+  if (!verifyToken) {
     return null;
   }
 
@@ -65,12 +84,16 @@ export const VerifyAccountForm = () => {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Verify your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            We've sent a verification code to
-          </p>
-          <p className="text-center text-sm font-medium text-primary-600">
-            {state.email}
-          </p>
+          {userEmail && (
+            <>
+              <p className="mt-2 text-center text-sm text-gray-600">
+                We've sent a verification code to
+              </p>
+              <p className="text-center text-sm font-medium text-primary-600">
+                {userEmail}
+              </p>
+            </>
+          )}
           <p className="mt-2 text-center text-sm text-gray-500">
             Please enter the 6-digit code to verify your account
           </p>
