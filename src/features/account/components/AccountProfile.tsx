@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAccountSelf } from '../api/accountApi';
 import { createPhone, updatePhone, deletePhone } from '../api/phoneApi';
 import { createAddress, updateAddress, deleteAddress } from '../api/addressApi';
+import { WorkspaceSelector } from '../../../components/WorkspaceSelector';
 import { useAppDispatch } from '../../../store/hooks';
 import { logout as logoutAction } from '../../../store/slices/authSlice';
 import { PhoneFormDialog, type PhoneFormData } from './PhoneFormDialog';
@@ -187,7 +188,8 @@ export const AccountProfile = () => {
               </button>
               <h1 className="text-xl font-bold text-gray-900">Account Profile</h1>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center space-x-4">
+              <WorkspaceSelector />
               <button
                 onClick={handleLogout}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"

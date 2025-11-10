@@ -3,6 +3,7 @@ import { AccountProfile } from './features/account/components/AccountProfile';
 import { LoginForm } from './features/auth/components/LoginForm';
 import { SignUpForm } from './features/auth/components/SignUpForm';
 import { VerifyAccountForm } from './features/auth/components/VerifyAccountForm';
+import { WorkspaceSelector } from './components/WorkspaceSelector';
 import { useAppSelector, useAppDispatch } from './store/hooks';
 import { logout } from './store/slices/authSlice';
 
@@ -44,6 +45,7 @@ const Dashboard = () => {
               <h1 className="text-xl font-bold text-gray-900">KAPI Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
+              <WorkspaceSelector />
               <button
                 onClick={() => navigate('/account')}
                 className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"

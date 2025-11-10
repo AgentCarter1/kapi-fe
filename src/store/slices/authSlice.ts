@@ -1,12 +1,14 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import type { User } from '../../types';
+import type { Workspace } from '../../api/endpoints/workspaces';
 
 interface AuthState {
   user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  currentWorkspace: Workspace | null;
 }
 
 const initialState: AuthState = {
@@ -14,6 +16,7 @@ const initialState: AuthState = {
   accessToken: localStorage.getItem('accessToken'),
   refreshToken: localStorage.getItem('refreshToken'),
   isAuthenticated: !!localStorage.getItem('accessToken'),
+  currentWorkspace: null,
 };
 
 const authSlice = createSlice({
@@ -43,11 +46,16 @@ const authSlice = createSlice({
       state.user = action.payload;
     },
     
+    setCurrentWorkspace: (state, action: PayloadAction<Workspace>) => {
+      state.currentWorkspace = action.payload;
+    },
+    
     logout: (state) => {
       state.user = null;
       state.accessToken = null;
       state.refreshToken = null;
       state.isAuthenticated = false;
+      state.currentWorkspace = null;
       
       // Clear localStorage
       localStorage.removeItem('accessToken');
@@ -56,6 +64,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, setUser, logout } = authSlice.actions;
+export const { setCredentials, setUser, setCurrentWorkspace, logout } = authSlice.actions;
 export default authSlice.reducer;
 
