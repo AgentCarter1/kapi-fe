@@ -1,11 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AccountProfile } from './features/account/components/AccountProfile';
 import { LoginForm } from './features/auth/components/LoginForm';
 import { SignUpForm } from './features/auth/components/SignUpForm';
 import { VerifyAccountForm } from './features/auth/components/VerifyAccountForm';
-import { WorkspaceSelector } from './components/WorkspaceSelector';
-import { useAppSelector, useAppDispatch } from './store/hooks';
-import { logout } from './store/slices/authSlice';
+import { WorkspaceAccounts } from './features/workspace/components/WorkspaceAccounts';
+import { DashboardLayout } from './layouts/DashboardLayout';
+import { useAppSelector } from './store/hooks';
 
 // Protected Route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -18,58 +18,29 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Dashboard placeholder
-const Dashboard = () => {
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
-  
-  const handleLogout = async () => {
-    try {
-      const { logout: logoutApi } = await import('./features/auth/api/authApi');
-      await logoutApi();
-      dispatch(logout());
-      navigate('/auth/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-      dispatch(logout());
-      navigate('/auth/login');
-    }
-  };
-  
+// Dashboard Home
+const DashboardHome = () => {
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
+    <div>
+      <h2 className="text-3xl font-bold text-gray-900 mb-4">Welcome to KAPI!</h2>
+      <p className="text-gray-600 text-lg">You are successfully logged in.</p>
+      <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">KAPI Dashboard</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <WorkspaceSelector />
-              <button
-                onClick={() => navigate('/account')}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              <div className="flex-shrink-0">
+                <svg className="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                Account
-              </button>
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
-              >
-                Logout
-              </button>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Workspace Members</dt>
+                  <dd className="text-lg font-medium text-gray-900">View & Manage</dd>
+                </dl>
+              </div>
             </div>
           </div>
-        </div>
-      </nav>
-      
-      <div className="py-12 px-4">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Welcome to KAPI!</h2>
-          <p className="text-gray-600 text-lg">You are successfully logged in.</p>
         </div>
       </div>
     </div>
@@ -87,12 +58,14 @@ function App() {
         <Route path="/auth/sign-up" element={<SignUpForm />} />
         <Route path="/auth/verify" element={<VerifyAccountForm />} />
         
-        {/* Protected Routes */}
+        {/* Protected Routes with Layout */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <DashboardLayout>
+                <DashboardHome />
+              </DashboardLayout>
             </ProtectedRoute>
           }
         />
@@ -100,7 +73,19 @@ function App() {
           path="/account"
           element={
             <ProtectedRoute>
-              <AccountProfile />
+              <DashboardLayout>
+                <AccountProfile />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/workspace/members"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <WorkspaceAccounts />
+              </DashboardLayout>
             </ProtectedRoute>
           }
         />
