@@ -1,9 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AccountProfile } from './features/account/components/AccountProfile';
+import { AccountInvites } from './features/account/components/AccountInvites';
 import { LoginForm } from './features/auth/components/LoginForm';
 import { SignUpForm } from './features/auth/components/SignUpForm';
 import { VerifyAccountForm } from './features/auth/components/VerifyAccountForm';
 import { WorkspaceAccounts } from './features/workspace/components/WorkspaceAccounts';
+import { WorkspaceInvitations } from './features/workspace/components/WorkspaceInvitations';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { useAppSelector } from './store/hooks';
 
@@ -80,11 +82,31 @@ function App() {
           }
         />
         <Route
+          path="/account/invites"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <AccountInvites />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/workspace/members"
           element={
             <ProtectedRoute>
               <DashboardLayout>
                 <WorkspaceAccounts />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/workspace/invitations"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <WorkspaceInvitations />
               </DashboardLayout>
             </ProtectedRoute>
           }

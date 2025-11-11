@@ -1,11 +1,18 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { UserPlus, Trash2 } from 'lucide-react';
 import { getWorkspaceAccounts } from '../../../api/endpoints/workspaceAccounts';
 import type { WorkspaceAccountsFilters } from '../../../api/endpoints/workspaceAccounts';
 import { useAppSelector } from '../../../store/hooks';
+import { InviteMemberDialog } from './InviteMemberDialog';
+import { useRemoveAccount } from '../api/accountApi';
 
 export const WorkspaceAccounts = () => {
   const currentWorkspace = useAppSelector((state) => state.auth.currentWorkspace);
+  const currentUser = useAppSelector((state) => state.auth.user);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+
+  const removeMutation = useRemoveAccount(currentWorkspace?.workspaceId || '');
 
   const [filters, setFilters] = useState<WorkspaceAccountsFilters>({
     page: 1,
@@ -18,6 +25,18 @@ export const WorkspaceAccounts = () => {
     queryFn: () => getWorkspaceAccounts(currentWorkspace!.workspaceId, filters),
     enabled: !!currentWorkspace?.workspaceId,
   });
+
+  // Sort accounts: Current user first, then others
+  const sortedAccounts = useMemo(() => {
+    if (!data?.items || !currentUser?.email) return data?.items || [];
+    
+    const currentUserAccount = data.items.find((acc) => acc.email === currentUser.email);
+    const otherAccounts = data.items.filter((acc) => acc.email !== currentUser.email);
+    
+    return currentUserAccount 
+      ? [currentUserAccount, ...otherAccounts]
+      : data.items;
+  }, [data?.items, currentUser?.email]);
 
   const handlePageChange = (newPage: number) => {
     setFilters((prev) => ({ ...prev, page: newPage }));
@@ -35,6 +54,20 @@ export const WorkspaceAccounts = () => {
     setFilters(newFilters);
   };
 
+  const handleRemoveAccount = async (accountId: string, email: string) => {
+    if (!confirm(`Are you sure you want to remove ${email} from this workspace?`)) {
+      return;
+    }
+
+    try {
+      await removeMutation.mutateAsync(accountId);
+      alert('🗑️ Member removed successfully');
+    } catch (error) {
+      console.error('Failed to remove member:', error);
+      alert('❌ Failed to remove member');
+    }
+  };
+
   if (!currentWorkspace) {
     return (
       <div className="max-w-7xl mx-auto">
@@ -47,10 +80,30 @@ export const WorkspaceAccounts = () => {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Workspace Members</h1>
-          {/* Filters */}
-          <div className="bg-white shadow rounded-lg p-4 mb-6">
-            <div className="flex items-center space-x-4">
+      {/* Header with Invite Button */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Workspace Members</h1>
+        <button
+          onClick={() => setIsInviteDialogOpen(true)}
+          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+        >
+          <UserPlus className="h-5 w-5 mr-2" />
+          Invite Member
+        </button>
+      </div>
+
+      {/* Invite Dialog */}
+      {currentWorkspace && (
+        <InviteMemberDialog
+          isOpen={isInviteDialogOpen}
+          onClose={() => setIsInviteDialogOpen(false)}
+          workspaceId={currentWorkspace.workspaceId}
+        />
+      )}
+
+      {/* Filters */}
+      <div className="bg-white shadow rounded-lg p-4 mb-6">
+        <div className="flex items-center space-x-4">
               <div className="flex-1">
                 <input
                   type="text"
@@ -148,11 +201,19 @@ export const WorkspaceAccounts = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Joined
                       </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {data.items.map((account) => (
-                      <tr key={account.id} className="hover:bg-gray-50">
+                    {sortedAccounts.map((account) => (
+                      <tr 
+                        key={account.id} 
+                        className={`hover:bg-gray-50 ${
+                          account.email === currentUser?.email ? 'bg-blue-50' : ''
+                        }`}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
@@ -165,6 +226,9 @@ export const WorkspaceAccounts = () => {
                                 {account.firstName || account.lastName
                                   ? `${account.firstName || ''} ${account.lastName || ''}`.trim()
                                   : 'No name'}
+                                {account.email === currentUser?.email && (
+                                  <span className="ml-2 text-xs text-blue-600 font-semibold">(You)</span>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -190,6 +254,18 @@ export const WorkspaceAccounts = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(account.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {account.status === 'ACTIVE' && account.email !== currentUser?.email && (
+                            <button
+                              onClick={() => handleRemoveAccount(account.accountId, account.email)}
+                              disabled={removeMutation.isPending}
+                              className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              Remove
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
