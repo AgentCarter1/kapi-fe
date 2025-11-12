@@ -1,17 +1,25 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, LogOut } from 'lucide-react';
+import { User, Mail, LogOut, Moon, Sun } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout } from '../store/slices/authSlice';
+import { useTheme } from '../context/ThemeContext';
 
 export const ProfileDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { theme, toggleTheme } = useTheme();
   
-  // Get user info from store (you can extend this)
+  // Get user info from store
   const userEmail = useAppSelector((state) => state.auth.user?.email || 'User');
+  const userName = useAppSelector((state) => {
+    const user = state.auth.user;
+    return user?.firstName || user?.lastName
+      ? `${user.firstName || ''} ${user.lastName || ''}`.trim()
+      : userEmail;
+  });
 
   // Close dropdown when clicking outside
   useEffect(() => {

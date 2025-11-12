@@ -94,16 +94,14 @@ export const WorkspaceInvitations = () => {
 
   if (!currentWorkspace) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-yellow-800">Please select a workspace first.</p>
-        </div>
+      <div className="bg-warning-50 dark:bg-warning-950 border border-warning-200 dark:border-warning-800 rounded-lg p-4">
+        <p className="text-warning-800 dark:text-warning-400">Please select a workspace first.</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <>
       {/* History Dialog */}
       <InvitationHistoryDialog
         isOpen={historyDialog.isOpen}
@@ -118,21 +116,23 @@ export const WorkspaceInvitations = () => {
       />
 
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Workspace Invitations</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Manage invitations sent from <span className="font-semibold">{currentWorkspace.workspaceName}</span>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-gray-800 dark:text-white/90 mb-2">
+          Workspace Invitations
+        </h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Manage invitations sent from <span className="font-semibold text-gray-700 dark:text-gray-300">{currentWorkspace.workspaceName}</span>
         </p>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white shadow-sm rounded-lg p-4 mb-6 border border-gray-200">
-        <div className="flex items-center space-x-4">
-          <label className="text-sm font-medium text-gray-700">Filter by Status:</label>
+      {/* Filters Card */}
+      <div className="bg-white dark:bg-gray-900 shadow-theme-xs rounded-lg p-5 mb-6 border border-gray-200 dark:border-gray-800">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by Status:</label>
           <select
             value={selectedStatus || ''}
             onChange={(e) => setSelectedStatus(e.target.value || undefined)}
-            className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+            className="h-11 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-800 dark:text-white/90 dark:focus:border-brand-800"
           >
             <option value="">All Invitations</option>
             <option value="PENDING">Pending</option>
@@ -142,7 +142,7 @@ export const WorkspaceInvitations = () => {
             <option value="CANCELLED">Cancelled</option>
           </select>
           {invites && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               {invites.length} invitation(s) found
             </span>
           )}
@@ -151,17 +151,14 @@ export const WorkspaceInvitations = () => {
 
       {/* Loading State */}
       {isLoading && (
-        <div className="bg-white shadow-sm rounded-lg p-6 border border-gray-200">
-          <div className="animate-pulse space-y-4">
+        <div className="bg-white dark:bg-gray-900 shadow-theme-xs rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800">
+          <div className="animate-pulse p-6 space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-start space-x-4">
-                  <div className="h-12 w-12 bg-gray-300 rounded"></div>
-                  <div className="flex-1 space-y-3">
-                    <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-                    <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-                    <div className="h-3 bg-gray-300 rounded w-2/3"></div>
-                  </div>
+              <div key={i} className="flex items-center space-x-4">
+                <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                 </div>
               </div>
             ))}
@@ -171,9 +168,9 @@ export const WorkspaceInvitations = () => {
 
       {/* Error State */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800 font-medium">❌ Failed to load invitations</p>
-          <p className="text-red-600 text-sm mt-1">{error.message}</p>
+        <div className="bg-error-50 dark:bg-error-950 border border-error-200 dark:border-error-800 rounded-lg p-4">
+          <p className="text-error-800 dark:text-error-400 font-medium">❌ Failed to load invitations</p>
+          <p className="text-error-600 dark:text-error-500 text-sm mt-1">{error.message}</p>
         </div>
       )}
 
@@ -181,123 +178,133 @@ export const WorkspaceInvitations = () => {
       {!isLoading && !error && invites && (
         <>
           {invites.length === 0 ? (
-            <div className="bg-white shadow-sm rounded-lg p-12 text-center border border-gray-200">
-              <Mail className="mx-auto h-16 w-16 text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium text-gray-900">
+            <div className="bg-white dark:bg-gray-900 shadow-theme-xs rounded-lg p-12 text-center border border-gray-200 dark:border-gray-800">
+              <div className="flex justify-center mb-4">
+                <div className="h-20 w-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <Mail className="h-10 w-10 text-gray-400 dark:text-gray-600" />
+                </div>
+              </div>
+              <h3 className="text-base font-semibold text-gray-800 dark:text-white/90 mb-2">
                 No invitations found
               </h3>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 {selectedStatus
                   ? `No ${selectedStatus.toLowerCase()} invitations in this workspace.`
                   : 'This workspace has not sent any invitations yet.'}
               </p>
             </div>
           ) : (
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Invitee Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Created
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Expires
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Accepted
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {invites.map((invite) => (
-                    <tr key={invite.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <Mail className="h-5 w-5 text-gray-400 mr-3" />
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {invite.email}
+            <div className="bg-white dark:bg-gray-900 shadow-theme-xs rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                  <thead className="bg-gray-50 dark:bg-gray-800/50">
+                    <tr>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Invitee Email
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Created
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Expires
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Accepted
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
+                    {invites.map((invite) => (
+                      <tr key={invite.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                              <Mail className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                             </div>
-                            {!invite.isActive && (
-                              <span className="text-xs text-gray-500">Inactive</span>
+                            <div className="ml-3">
+                              <div className="text-sm font-medium text-gray-800 dark:text-white/90">
+                                {invite.email}
+                              </div>
+                              {!invite.isActive && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 mt-1">
+                                  Inactive
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(
+                              invite.status,
+                            )} dark:bg-opacity-20`}
+                          >
+                            {getStatusIcon(invite.status)}
+                            <span className="ml-1.5">{invite.status}</span>
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                          {formatDate(invite.createdAt)}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <span
+                            className={
+                              isExpired(invite.expireAt)
+                                ? 'text-error-600 dark:text-error-400 font-medium'
+                                : 'text-gray-600 dark:text-gray-400'
+                            }
+                          >
+                            {formatDate(invite.expireAt)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                          {invite.acceptedAt ? (
+                            formatDate(invite.acceptedAt)
+                          ) : (
+                            <span className="text-gray-400 dark:text-gray-600">—</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            {/* History Button */}
+                            <button
+                              onClick={() => handleViewHistory(invite.email)}
+                              className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-900 rounded-lg hover:bg-brand-100 dark:hover:bg-brand-900 transition-colors"
+                              title="View invitation history"
+                            >
+                              <History className="h-3.5 w-3.5 mr-1" />
+                              History
+                            </button>
+
+                            {/* Cancel Button */}
+                            {invite.status === 'PENDING' && (
+                              <button
+                                onClick={() => handleCancelInvitation(invite.id, invite.email)}
+                                disabled={cancelMutation.isPending}
+                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-error-700 dark:text-error-400 bg-error-50 dark:bg-error-950 border border-error-200 dark:border-error-900 rounded-lg hover:bg-error-100 dark:hover:bg-error-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              >
+                                <XIcon className="h-3.5 w-3.5 mr-1" />
+                                Cancel
+                              </button>
                             )}
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(
-                            invite.status,
-                          )}`}
-                        >
-                          {getStatusIcon(invite.status)}
-                          <span className="ml-2">{invite.status}</span>
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {formatDate(invite.createdAt)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <span
-                          className={
-                            isExpired(invite.expireAt)
-                              ? 'text-red-600 font-medium'
-                              : 'text-gray-600'
-                          }
-                        >
-                          {formatDate(invite.expireAt)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {invite.acceptedAt ? (
-                          formatDate(invite.acceptedAt)
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                          {/* History Button - Available for all invitations */}
-                          <button
-                            onClick={() => handleViewHistory(invite.email)}
-                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
-                            title="View invitation history"
-                          >
-                            <History className="h-3 w-3 mr-1" />
-                            History
-                          </button>
-
-                          {/* Cancel Button - Only for PENDING invitations */}
-                          {invite.status === 'PENDING' && (
-                            <button
-                              onClick={() => handleCancelInvitation(invite.id, invite.email)}
-                              disabled={cancelMutation.isPending}
-                              className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              <XIcon className="h-3 w-3 mr-1" />
-                              Cancel
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>
       )}
-    </div>
+    </>
   );
 };
 

@@ -40,13 +40,13 @@ const MemberHistoryDialog: React.FC<MemberHistoryDialogProps> = ({
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-success-100 text-success-800 dark:bg-success-950 dark:text-success-400 border-success-200 dark:border-success-900';
       case 'REMOVED':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-error-100 text-error-800 dark:bg-error-950 dark:text-error-400 border-error-200 dark:border-error-900';
       case 'SUSPENDED':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-warning-100 text-warning-800 dark:bg-warning-950 dark:text-warning-400 border-warning-200 dark:border-warning-900';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700';
     }
   };
 
@@ -66,75 +66,69 @@ const MemberHistoryDialog: React.FC<MemberHistoryDialogProps> = ({
   };
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-40"
-        onClick={onClose}
-      />
+    <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-3xl w-full max-h-[85vh] flex flex-col border border-gray-200 dark:border-gray-800">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-brand-50 to-brand-100 dark:from-brand-950 dark:to-brand-900">
+          <div>
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white/90">
+              Membership History
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              {accountName} ({accountEmail})
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-2 hover:bg-white/50 dark:hover:bg-gray-800/50 rounded-lg"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-      {/* Dialog */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] flex flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                Membership History
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">
-                {accountName} ({accountEmail})
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {isLoading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-3 border-brand-600 dark:border-brand-400"></div>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-error-50 dark:bg-error-950 border border-error-200 dark:border-error-800 rounded-lg p-4">
+              <p className="text-error-800 dark:text-error-400 font-medium">Failed to load history</p>
+            </div>
+          )}
+
+          {!isLoading && !error && history && history.length === 0 && (
+            <div className="text-center py-12">
+              <div className="h-20 w-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                <UserX className="h-10 w-10 text-gray-400 dark:text-gray-600" />
+              </div>
+              <h3 className="text-base font-semibold text-gray-800 dark:text-white/90 mb-2">
+                No History Found
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                This member has no previous membership records.
               </p>
             </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
+          )}
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {isLoading && (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              </div>
-            )}
+          {!isLoading && !error && history && history.length > 0 && (
+            <div className="space-y-4">
+              {/* Timeline */}
+              <div className="relative">
+                {/* Timeline line */}
+                <div className="absolute left-5 top-8 bottom-0 w-0.5 bg-gradient-to-b from-brand-300 to-gray-200 dark:from-brand-700 dark:to-gray-700" />
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-red-800">Failed to load history</p>
-              </div>
-            )}
+                {/* Timeline items */}
+                {history.map((record, index) => (
+                  <div key={record.id} className="relative pl-14 pb-6 last:pb-0">
+                    {/* Timeline dot */}
+                    <div className="absolute left-3 top-2 h-5 w-5 rounded-full bg-brand-500 dark:bg-brand-600 border-4 border-white dark:border-gray-900 shadow-lg ring-2 ring-brand-100 dark:ring-brand-900" />
 
-            {!isLoading && !error && history && history.length === 0 && (
-              <div className="text-center py-12">
-                <UserX className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No History Found
-                </h3>
-                <p className="text-gray-600">
-                  This member has no previous membership records.
-                </p>
-              </div>
-            )}
-
-            {!isLoading && !error && history && history.length > 0 && (
-              <div className="space-y-4">
-                {/* Timeline */}
-                <div className="relative">
-                  {/* Timeline line */}
-                  <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-gray-200" />
-
-                  {/* Timeline items */}
-                  {history.map((record, index) => (
-                    <div key={record.id} className="relative pl-12 pb-8">
-                      {/* Timeline dot */}
-                      <div className="absolute left-2 top-2 h-4 w-4 rounded-full bg-blue-600 border-4 border-white shadow" />
-
-                      {/* Card */}
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    {/* Card */}
+                    <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-800 rounded-lg p-4 hover:shadow-lg hover:border-brand-200 dark:hover:border-brand-800 transition-all">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
@@ -223,18 +217,17 @@ const MemberHistoryDialog: React.FC<MemberHistoryDialogProps> = ({
             )}
           </div>
 
-          {/* Footer */}
-          <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-            >
-              Close
-            </button>
-          </div>
+        {/* Footer */}
+        <div className="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            Close
+          </button>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

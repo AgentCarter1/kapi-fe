@@ -90,15 +90,15 @@ const WorkspaceManagementDialog: React.FC<WorkspaceManagementDialogProps> = ({
   const getRoleBadgeColor = (accountType: string) => {
     switch (accountType) {
       case "primaryOwner":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-400 border-yellow-200 dark:border-yellow-900";
       case "owner":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-400 border-blue-200 dark:border-blue-900";
       case "admin":
-        return "bg-purple-100 text-purple-800 border-purple-200";
+        return "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-400 border-purple-200 dark:border-purple-900";
       case "member":
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700";
     }
   };
 
@@ -120,179 +120,180 @@ const WorkspaceManagementDialog: React.FC<WorkspaceManagementDialogProps> = ({
   if (!isOpen) return null;
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-40"
-        onClick={onClose}
-      />
-
-      {/* Dialog */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-4xl w-full max-h-[85vh] flex flex-col border border-gray-200 dark:border-gray-800">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gradient-to-r from-brand-50 to-brand-100 dark:from-brand-950 dark:to-brand-900">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-brand-500 dark:bg-brand-600 flex items-center justify-center">
+              <Building2 className="h-5 w-5 text-white" />
+            </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                <Building2 className="h-6 w-6" />
+              <h2 className="text-lg font-bold text-gray-800 dark:text-white/90">
                 Workspace Management
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Manage your workspaces, set default, and leave workspaces
               </p>
             </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="h-6 w-6" />
-            </button>
           </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-2 hover:bg-white/50 dark:hover:bg-gray-800/50 rounded-lg"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {isLoading && (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {isLoading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-3 border-brand-600 dark:border-brand-400"></div>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-error-50 dark:bg-error-950 border border-error-200 dark:border-error-800 rounded-lg p-4">
+              <p className="text-error-800 dark:text-error-400 font-medium">Failed to load workspaces</p>
+            </div>
+          )}
+
+          {!isLoading && !error && workspaces && workspaces.length === 0 && (
+            <div className="text-center py-12">
+              <div className="h-20 w-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                <Building2 className="h-10 w-10 text-gray-400 dark:text-gray-600" />
               </div>
-            )}
+              <h3 className="text-base font-semibold text-gray-800 dark:text-white/90 mb-2">
+                No Workspaces Found
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                You are not a member of any workspaces yet.
+              </p>
+            </div>
+          )}
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-red-800">Failed to load workspaces</p>
-              </div>
-            )}
-
-            {!isLoading && !error && workspaces && workspaces.length === 0 && (
-              <div className="text-center py-12">
-                <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No Workspaces Found
-                </h3>
-                <p className="text-gray-600">
-                  You are not a member of any workspaces yet.
-                </p>
-              </div>
-            )}
-
-            {!isLoading && !error && workspaces && workspaces.length > 0 && (
-              <div className="space-y-4">
-                {workspaces.map((workspace) => (
-                  <div
-                    key={workspace.workspaceId}
-                    className={`border rounded-lg p-4 transition-all ${
-                      workspace.isDefault
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 bg-white hover:shadow-md"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      {/* Workspace Info */}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Building2 className="h-5 w-5 text-gray-700" />
-                          <h3 className="text-lg font-semibold text-gray-900">
+          {!isLoading && !error && workspaces && workspaces.length > 0 && (
+            <div className="space-y-3">
+              {workspaces.map((workspace) => (
+                <div
+                  key={workspace.workspaceId}
+                  className={`border rounded-xl p-5 transition-all ${
+                    workspace.isDefault
+                      ? "border-brand-300 dark:border-brand-700 bg-gradient-to-br from-brand-50 to-brand-100 dark:from-brand-950/50 dark:to-brand-900/30 shadow-lg"
+                      : "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:shadow-lg hover:border-brand-200 dark:hover:border-brand-800"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    {/* Workspace Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 dark:from-brand-600 dark:to-brand-700 flex items-center justify-center shadow-theme-xs flex-shrink-0">
+                          <Building2 className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-bold text-gray-800 dark:text-white/90 truncate">
                             {workspace.workspaceName}
                           </h3>
                           {workspace.isDefault && (
-                            <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded border bg-blue-100 text-blue-800 border-blue-200">
+                            <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border bg-brand-100 text-brand-800 dark:bg-brand-950 dark:text-brand-400 border-brand-200 dark:border-brand-900 mt-1">
                               <Star className="h-3 w-3 mr-1 fill-current" />
                               Default
                             </span>
                           )}
                         </div>
+                      </div>
 
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-1">
-                            {getRoleIcon(workspace.accountType)}
-                            <span
-                              className={`px-2 py-1 text-xs font-medium rounded border ${getRoleBadgeColor(
-                                workspace.accountType
-                              )}`}
-                            >
-                              {getRoleLabel(workspace.accountType)}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="font-medium">Status:</span>{" "}
-                            <span
-                              className={`px-2 py-1 text-xs font-medium rounded ${
-                                workspace.status === "ACTIVE"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {workspace.status}
-                            </span>
-                          </div>
+                      <div className="flex flex-wrap items-center gap-3 text-sm">
+                        <div className="flex items-center gap-1.5">
+                          {getRoleIcon(workspace.accountType)}
+                          <span
+                            className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${getRoleBadgeColor(
+                              workspace.accountType
+                            )}`}
+                          >
+                            {getRoleLabel(workspace.accountType)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Status:</span>
+                          <span
+                            className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${
+                              workspace.status === "ACTIVE"
+                                ? "bg-success-100 text-success-800 dark:bg-success-950 dark:text-success-400 border-success-200 dark:border-success-900"
+                                : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700"
+                            }`}
+                          >
+                            {workspace.status}
+                          </span>
                         </div>
                       </div>
+                    </div>
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-2 ml-4">
-                        {/* Set Default Button */}
-                        {!workspace.isDefault && (
-                          <button
-                            onClick={() =>
-                              handleSetDefault(
-                                workspace.workspaceId,
-                                workspace.workspaceName
-                              )
-                            }
-                            disabled={setDefaultMutation.isPending}
-                            className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            title="Set as default workspace"
-                          >
-                            <Star className="h-4 w-4 mr-1" />
-                            Set Default
-                          </button>
-                        )}
+                    {/* Actions */}
+                    <div className="flex flex-col gap-2 ml-4">
+                      {/* Set Default Button */}
+                      {!workspace.isDefault && (
+                        <button
+                          onClick={() =>
+                            handleSetDefault(
+                              workspace.workspaceId,
+                              workspace.workspaceName
+                            )
+                          }
+                          disabled={setDefaultMutation.isPending}
+                          className="inline-flex items-center px-3 py-2 text-xs font-medium text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-900 rounded-lg hover:bg-brand-100 dark:hover:bg-brand-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Set as default workspace"
+                        >
+                          <Star className="h-4 w-4 mr-1.5" />
+                          Set Default
+                        </button>
+                      )}
 
-                        {/* Leave Button - Not for primary owners */}
-                        {workspace.accountType !== "primaryOwner" && (
-                          <button
-                            onClick={() =>
-                              handleLeaveWorkspace(
-                                workspace.workspaceId,
-                                workspace.workspaceName,
-                                workspace.accountType
-                              )
-                            }
-                            disabled={leaveMutation.isPending}
-                            className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            title="Leave this workspace"
-                          >
-                            <LogOut className="h-4 w-4 mr-1" />
-                            Leave
-                          </button>
-                        )}
+                      {/* Leave Button */}
+                      {workspace.accountType !== "primaryOwner" && (
+                        <button
+                          onClick={() =>
+                            handleLeaveWorkspace(
+                              workspace.workspaceId,
+                              workspace.workspaceName,
+                              workspace.accountType
+                            )
+                          }
+                          disabled={leaveMutation.isPending}
+                          className="inline-flex items-center px-3 py-2 text-xs font-medium text-error-700 dark:text-error-400 bg-error-50 dark:bg-error-950 border border-error-200 dark:border-error-900 rounded-lg hover:bg-error-100 dark:hover:bg-error-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          title="Leave this workspace"
+                        >
+                          <LogOut className="h-4 w-4 mr-1.5" />
+                          Leave
+                        </button>
+                      )}
 
-                        {/* Primary Owner Info */}
-                        {workspace.accountType === "primaryOwner" && (
-                          <div className="px-3 py-2 text-xs font-medium text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md">
-                            Cannot leave (Owner)
-                          </div>
-                        )}
-                      </div>
+                      {/* Primary Owner Info */}
+                      {workspace.accountType === "primaryOwner" && (
+                        <div className="px-3 py-2 text-xs font-medium text-warning-700 dark:text-warning-400 bg-warning-50 dark:bg-warning-950 border border-warning-200 dark:border-warning-900 rounded-lg text-center">
+                          Cannot leave
+                        </div>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-          {/* Footer */}
-          <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-            >
-              Close
-            </button>
-          </div>
+        {/* Footer */}
+        <div className="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            Close
+          </button>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

@@ -1,37 +1,32 @@
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Home, Users, Mail, ChevronDown, ChevronRight } from 'lucide-react';
+import { useSidebar } from '../context/SidebarContext';
+
+type MenuItem = {
+  name: string;
+  path: string;
+  icon: React.ReactNode;
+  children?: { name: string; path: string }[];
+};
 
 export const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isExpanded, isHovered, setIsHovered, isMobileOpen, setIsMobileOpen } = useSidebar();
+  
+  const [openMenus, setOpenMenus] = useState<string[]>(['Workspace']); // Default open
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     {
       name: 'Dashboard',
       path: '/dashboard',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-          />
-        </svg>
-      ),
+      icon: <Home className="w-5 h-5" />,
     },
     {
       name: 'Workspace',
       path: '/workspace/members',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        </svg>
-      ),
+      icon: <Users className="w-5 h-5" />,
       children: [
         {
           name: 'Members',
@@ -46,47 +41,129 @@ export const Sidebar = () => {
   ];
 
   const isActive = (path: string) => location.pathname === path;
+  const isMenuOpen = (name: string) => openMenus.includes(name);
+
+  const toggleMenu = (name: string) => {
+    setOpenMenus((prev) =>
+      prev.includes(name) ? prev.filter((item) => item !== name) : [...prev, name]
+    );
+  };
+
+  const shouldShowText = isExpanded || isHovered;
 
   return (
-    <div className="w-64 bg-white shadow-lg h-screen fixed left-0 top-0 overflow-y-auto">
-      <div className="p-4 border-b border-gray-200">
-        <h2 className="text-xl font-bold text-gray-900">KAPI</h2>
-      </div>
-      <nav className="p-4 space-y-1">
-        {menuItems.map((item) => (
-          <div key={item.path}>
-            <button
-              onClick={() => navigate(item.path)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                isActive(item.path)
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              {item.icon}
-              <span>{item.name}</span>
-            </button>
-            {item.children && (
-              <div className="ml-4 mt-1 space-y-1">
-                {item.children.map((child) => (
-                  <button
-                    key={child.path}
-                    onClick={() => navigate(child.path)}
-                    className={`w-full text-left px-4 py-2 text-sm rounded-lg transition-colors ${
-                      isActive(child.path)
-                        ? 'bg-blue-50 text-blue-700 font-medium'
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    {child.name}
-                  </button>
-                ))}
-              </div>
+    <>
+      {/* Sidebar */}
+      <aside
+        className={`fixed left-0 top-0 z-9999 flex h-screen flex-col overflow-y-hidden bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 duration-300 ease-linear lg:translate-x-0 ${
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+        } ${
+          shouldShowText ? 'w-[290px]' : 'w-[90px]'
+        }`}
+        onMouseEnter={() => !isExpanded && setIsHovered(true)}
+        onMouseLeave={() => !isExpanded && setIsHovered(false)}
+      >
+        {/* Logo */}
+        <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500">
+              <span className="text-xl font-bold text-white">K</span>
+            </div>
+            {shouldShowText && (
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                KAPI
+              </h2>
             )}
           </div>
-        ))}
-      </nav>
-    </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 lg:px-6">
+          <div className="space-y-2">
+            {menuItems.map((item) => (
+              <div key={item.path}>
+                {/* Main Menu Item */}
+                <button
+                  onClick={() => {
+                    if (item.children) {
+                      toggleMenu(item.name);
+                    } else {
+                      navigate(item.path);
+                      setIsMobileOpen(false);
+                    }
+                  }}
+                  className={`group menu-item w-full ${
+                    isActive(item.path) && !item.children
+                      ? 'menu-item-active'
+                      : 'menu-item-inactive'
+                  }`}
+                  title={!shouldShowText ? item.name : ''}
+                >
+                  <span
+                    className={`flex items-center justify-center ${
+                      isActive(item.path) && !item.children
+                        ? 'menu-item-icon-active'
+                        : 'menu-item-icon-inactive'
+                    }`}
+                  >
+                    {item.icon}
+                  </span>
+                  {shouldShowText && (
+                    <>
+                      <span className="flex-1 text-left">{item.name}</span>
+                      {item.children && (
+                        <span
+                          className={`transition-transform duration-200 ${
+                            isMenuOpen(item.name) ? 'rotate-180' : ''
+                          } ${
+                            isActive(item.path)
+                              ? 'menu-item-icon-active'
+                              : 'menu-item-icon-inactive'
+                          }`}
+                        >
+                          <ChevronDown className="w-4 h-4" />
+                        </span>
+                      )}
+                    </>
+                  )}
+                </button>
+
+                {/* Submenu */}
+                {item.children && isMenuOpen(item.name) && shouldShowText && (
+                  <div className="mt-1 space-y-1 pl-4">
+                    {item.children.map((child) => (
+                      <button
+                        key={child.path}
+                        onClick={() => {
+                          navigate(child.path);
+                          setIsMobileOpen(false);
+                        }}
+                        className={`group w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                          isActive(child.path)
+                            ? 'bg-brand-50 text-brand-500 dark:bg-brand-500/[0.12] dark:text-brand-400'
+                            : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5'
+                        }`}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                        <span>{child.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </nav>
+      </aside>
+
+      {/* Mobile Backdrop */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 z-9998 bg-black/20 backdrop-blur-sm lg:hidden"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+    </>
   );
 };
 
