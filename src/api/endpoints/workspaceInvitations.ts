@@ -104,3 +104,40 @@ export const cancelInvitation = async (
   );
 };
 
+export interface InvitationHistory {
+  id: string;
+  email: string;
+  status: string;
+  roles: object | null;
+  permissions: object | null;
+  isActive: boolean;
+  expireAt: string;
+  tempBeginAt: string | null;
+  tempEndAt: string | null;
+  createdAt: string;
+  acceptedAt: string | null;
+  deletedAt: string; // Soft-deleted timestamp
+}
+
+type GetInvitationHistoryResponse = {
+  success: boolean;
+  customCode: number;
+  message: string;
+  data: InvitationHistory[];
+};
+
+export const getInvitationHistory = async (
+  workspaceId: string,
+  email: string,
+): Promise<InvitationHistory[]> => {
+  const response = await api.get<GetInvitationHistoryResponse>(
+    `/workspace/invitations/history/${encodeURIComponent(email)}`,
+    {
+      headers: {
+        'workspace-id': workspaceId,
+      },
+    },
+  );
+  return response.data.data;
+};
+

@@ -3,12 +3,14 @@ import {
   createAccountInvite, 
   getWorkspaceInvites,
   cancelInvitation,
+  getInvitationHistory,
 } from '../../../api/endpoints/workspaceInvitations';
 import type { 
   CreateInviteRequest, 
   CreateInviteResponse,
   WorkspaceInvite,
   GetWorkspaceInvitesParams,
+  InvitationHistory,
 } from '../../../api/endpoints/workspaceInvitations';
 
 /**
@@ -50,6 +52,17 @@ export const useCancelInvitation = (workspaceId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspace-invitations', workspaceId] });
     },
+  });
+};
+
+/**
+ * React Query hook for fetching invitation history
+ */
+export const useInvitationHistory = (workspaceId: string, email: string) => {
+  return useQuery<InvitationHistory[], Error>({
+    queryKey: ['invitation-history', workspaceId, email],
+    queryFn: () => getInvitationHistory(workspaceId, email),
+    enabled: !!workspaceId && !!email,
   });
 };
 

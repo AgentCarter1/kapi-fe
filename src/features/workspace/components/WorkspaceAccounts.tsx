@@ -1,16 +1,28 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { UserPlus, Trash2 } from 'lucide-react';
+import { UserPlus, Trash2, History } from 'lucide-react';
 import { getWorkspaceAccounts } from '../../../api/endpoints/workspaceAccounts';
 import type { WorkspaceAccountsFilters } from '../../../api/endpoints/workspaceAccounts';
 import { useAppSelector } from '../../../store/hooks';
 import { InviteMemberDialog } from './InviteMemberDialog';
+import MemberHistoryDialog from './MemberHistoryDialog';
 import { useRemoveAccount } from '../api/accountApi';
 
 export const WorkspaceAccounts = () => {
   const currentWorkspace = useAppSelector((state) => state.auth.currentWorkspace);
   const currentUser = useAppSelector((state) => state.auth.user);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [historyDialog, setHistoryDialog] = useState<{
+    isOpen: boolean;
+    accountId: string;
+    accountName: string;
+    accountEmail: string;
+  }>({
+    isOpen: false,
+    accountId: '',
+    accountName: '',
+    accountEmail: '',
+  });
 
   const removeMutation = useRemoveAccount(currentWorkspace?.workspaceId || '');
 
@@ -68,6 +80,25 @@ export const WorkspaceAccounts = () => {
     }
   };
 
+  const handleViewHistory = (
+    accountId: string,
+    firstName: string | undefined,
+    lastName: string | undefined,
+    email: string
+  ) => {
+    const accountName =
+      firstName || lastName
+        ? `${firstName || ''} ${lastName || ''}`.trim()
+        : 'No name';
+    
+    setHistoryDialog({
+      isOpen: true,
+      accountId,
+      accountName,
+      accountEmail: email,
+    });
+  };
+
   if (!currentWorkspace) {
     return (
       <div className="max-w-7xl mx-auto">
@@ -100,6 +131,23 @@ export const WorkspaceAccounts = () => {
           workspaceId={currentWorkspace.workspaceId}
         />
       )}
+
+      {/* History Dialog */}
+      <MemberHistoryDialog
+        isOpen={historyDialog.isOpen}
+        onClose={() =>
+          setHistoryDialog({
+            isOpen: false,
+            accountId: '',
+            accountName: '',
+            accountEmail: '',
+          })
+        }
+        workspaceId={currentWorkspace?.workspaceId || ''}
+        accountId={historyDialog.accountId}
+        accountName={historyDialog.accountName}
+        accountEmail={historyDialog.accountEmail}
+      />
 
       {/* Filters */}
       <div className="bg-white shadow rounded-lg p-4 mb-6">
@@ -256,16 +304,36 @@ export const WorkspaceAccounts = () => {
                           {new Date(account.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {account.status === 'ACTIVE' && account.email !== currentUser?.email && (
+                          <div className="flex items-center gap-2">
+                            {/* History Button - Available for all members */}
                             <button
-                              onClick={() => handleRemoveAccount(account.accountId, account.email)}
-                              disabled={removeMutation.isPending}
-                              className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              onClick={() =>
+                                handleViewHistory(
+                                  account.accountId,
+                                  account.firstName,
+                                  account.lastName,
+                                  account.email
+                                )
+                              }
+                              className="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+                              title="View membership history"
                             >
-                              <Trash2 className="h-3 w-3 mr-1" />
-                              Remove
+                              <History className="h-3 w-3 mr-1" />
+                              History
                             </button>
-                          )}
+
+                            {/* Remove Button - Only for active members (not yourself) */}
+                            {account.status === 'ACTIVE' && account.email !== currentUser?.email && (
+                              <button
+                                onClick={() => handleRemoveAccount(account.accountId, account.email)}
+                                disabled={removeMutation.isPending}
+                                className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              >
+                                <Trash2 className="h-3 w-3 mr-1" />
+                                Remove
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

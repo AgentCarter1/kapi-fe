@@ -43,3 +43,36 @@ export const getAccountInvites = async (
   return response.data.data;
 };
 
+export interface AccountInviteHistory {
+  id: string;
+  email: string;
+  workspaceId: string;
+  workspaceName?: string;
+  status: InviteStatus;
+  roles: object | null;
+  permissions: object | null;
+  isActive: boolean;
+  expireAt: string;
+  tempBeginAt: string | null;
+  tempEndAt: string | null;
+  createdAt: string;
+  acceptedAt: string | null;
+  deletedAt: string; // Soft-deleted timestamp
+}
+
+type AccountInviteHistoryResponse = {
+  success: boolean;
+  customCode: number;
+  message: string;
+  data: AccountInviteHistory[];
+};
+
+export const getAccountInviteHistory = async (
+  workspaceId: string,
+): Promise<AccountInviteHistory[]> => {
+  const response = await api.get<AccountInviteHistoryResponse>(
+    `/account/invites/history/${workspaceId}`,
+  );
+  return response.data.data;
+};
+

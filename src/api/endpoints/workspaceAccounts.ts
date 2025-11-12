@@ -62,3 +62,41 @@ export const removeAccountFromWorkspace = async (
   });
 };
 
+export type AccountHistory = {
+  id: string;
+  accountId: string;
+  workspaceId: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  accountType: string;
+  status: string;
+  isActive: boolean;
+  startAt?: string | null;
+  endAt?: string | null;
+  createdAt: string;
+  deletedAt: string; // Soft-deleted timestamp
+};
+
+type AccountHistoryResponse = {
+  success: boolean;
+  customCode: number;
+  message: string;
+  data: AccountHistory[];
+};
+
+export const getAccountHistory = async (
+  workspaceId: string,
+  accountId: string,
+): Promise<AccountHistory[]> => {
+  const response = await api.get<AccountHistoryResponse>(
+    `/workspace/accounts/${accountId}/history`,
+    {
+      headers: {
+        'workspace-id': workspaceId,
+      },
+    },
+  );
+  return response.data.data;
+};
+

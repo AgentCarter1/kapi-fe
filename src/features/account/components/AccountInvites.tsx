@@ -1,12 +1,22 @@
 import { useState } from 'react';
 import { useAccountInvites, useDeclineInvitation, useAcceptInvitation } from '../api/inviteApi';
 import { InviteStatus } from '../../../api/endpoints/accountInvites';
-import { Mail, Calendar, MapPin, Clock, Check, X } from 'lucide-react';
+import { Mail, Calendar, MapPin, Clock, Check, X, History } from 'lucide-react';
+import AccountInviteHistoryDialog from './AccountInviteHistoryDialog';
 
 export const AccountInvites = () => {
   const [selectedStatus, setSelectedStatus] = useState<InviteStatus | undefined>(
     undefined,
   );
+  const [historyDialog, setHistoryDialog] = useState<{
+    isOpen: boolean;
+    workspaceId: string;
+    workspaceName: string;
+  }>({
+    isOpen: false,
+    workspaceId: '',
+    workspaceName: '',
+  });
 
   const { data: invites, isLoading, error } = useAccountInvites({
     status: selectedStatus,
@@ -43,6 +53,14 @@ export const AccountInvites = () => {
     }
   };
 
+  const handleViewHistory = (workspaceId: string, workspaceName: string) => {
+    setHistoryDialog({
+      isOpen: true,
+      workspaceId,
+      workspaceName,
+    });
+  };
+
   const getStatusColor = (status: InviteStatus) => {
     switch (status) {
       case InviteStatus.PENDING:
@@ -76,6 +94,20 @@ export const AccountInvites = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* History Dialog */}
+      <AccountInviteHistoryDialog
+        isOpen={historyDialog.isOpen}
+        onClose={() =>
+          setHistoryDialog({
+            isOpen: false,
+            workspaceId: '',
+            workspaceName: '',
+          })
+        }
+        workspaceId={historyDialog.workspaceId}
+        workspaceName={historyDialog.workspaceName}
+      />
+
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">My Invitations</h1>
@@ -256,27 +288,40 @@ export const AccountInvites = () => {
                     </div>
                   </div>
 
-                  {/* Action Buttons (Only for PENDING invitations) */}
-                  {invite.status === InviteStatus.PENDING && !isExpired(invite.expireAt) && (
-                    <div className="mt-4 flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-                      <button
-                        onClick={() => handleDeclineInvitation(invite.id, invite.zoneName)}
-                        disabled={declineMutation.isPending || acceptMutation.isPending}
-                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        Decline
-                      </button>
-                      <button
-                        onClick={() => handleAcceptInvitation(invite.id, invite.zoneName)}
-                        disabled={declineMutation.isPending || acceptMutation.isPending}
-                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 border border-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <Check className="h-4 w-4 mr-2" />
-                        Accept
-                      </button>
-                    </div>
-                  )}
+                  {/* Action Buttons */}
+                  <div className="mt-4 flex items-center justify-between pt-4 border-t border-gray-200">
+                    {/* History Button - Available for all invitations */}
+                    <button
+                      onClick={() => handleViewHistory(invite.zoneId, invite.zoneName)}
+                      className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+                      title="View invitation history from this workspace"
+                    >
+                      <History className="h-4 w-4 mr-2" />
+                      History
+                    </button>
+
+                    {/* Accept/Decline Buttons - Only for PENDING non-expired invitations */}
+                    {invite.status === InviteStatus.PENDING && !isExpired(invite.expireAt) && (
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={() => handleDeclineInvitation(invite.id, invite.zoneName)}
+                          disabled={declineMutation.isPending || acceptMutation.isPending}
+                          className="inline-flex items-center px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Decline
+                        </button>
+                        <button
+                          onClick={() => handleAcceptInvitation(invite.id, invite.zoneName)}
+                          disabled={declineMutation.isPending || acceptMutation.isPending}
+                          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 border border-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <Check className="h-4 w-4 mr-2" />
+                          Accept
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getAccountInvites } from '../../../api/endpoints/accountInvites';
+import { getAccountInvites, getAccountInviteHistory } from '../../../api/endpoints/accountInvites';
 import { declineInvitation, acceptInvitation } from '../../../api/endpoints/accountInvitations';
-import type { AccountInvite, GetAccountInvitesParams } from '../../../api/endpoints/accountInvites';
+import type { AccountInvite, GetAccountInvitesParams, AccountInviteHistory } from '../../../api/endpoints/accountInvites';
 
 /**
  * React Query hook for fetching account invites
@@ -41,6 +41,17 @@ export const useAcceptInvitation = () => {
       queryClient.invalidateQueries({ queryKey: ['account-invites'] });
       queryClient.invalidateQueries({ queryKey: ['account-workspaces'] });
     },
+  });
+};
+
+/**
+ * React Query hook for fetching account invite history from a specific workspace
+ */
+export const useAccountInviteHistory = (workspaceId: string) => {
+  return useQuery<AccountInviteHistory[], Error>({
+    queryKey: ['account-invite-history', workspaceId],
+    queryFn: () => getAccountInviteHistory(workspaceId),
+    enabled: !!workspaceId,
   });
 };
 

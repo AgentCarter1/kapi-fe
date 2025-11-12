@@ -21,3 +21,14 @@ export const getWorkspaces = async (): Promise<Workspace[]> => {
   return response.data.data;
 };
 
+// Alias for consistency
+export const getAccountWorkspaces = getWorkspaces;
+
+export const leaveWorkspace = async (workspaceId: string): Promise<void> => {
+  await api.patch(`/account/workspaces/${workspaceId}/leave`);
+};
+
+export const setDefaultWorkspace = async (workspaceId: string): Promise<void> => {
+  await api.patch(`/account/workspaces/${workspaceId}/set-default`);
+};
+

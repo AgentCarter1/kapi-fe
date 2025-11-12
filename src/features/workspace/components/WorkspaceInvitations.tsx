@@ -1,12 +1,20 @@
 import { useState } from 'react';
-import { Mail, Calendar, Clock, CheckCircle, XCircle, Ban, HourglassIcon, X as XIcon } from 'lucide-react';
+import { Mail, Calendar, Clock, CheckCircle, XCircle, Ban, HourglassIcon, X as XIcon, History } from 'lucide-react';
 import { useWorkspaceInvites, useCancelInvitation } from '../api/invitationApi';
 import { useAppSelector } from '../../../store/hooks';
+import InvitationHistoryDialog from './InvitationHistoryDialog';
 
 export const WorkspaceInvitations = () => {
   const currentWorkspace = useAppSelector((state) => state.auth.currentWorkspace);
   const [selectedStatus, setSelectedStatus] = useState<string | undefined>(undefined);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [historyDialog, setHistoryDialog] = useState<{
+    isOpen: boolean;
+    email: string;
+  }>({
+    isOpen: false,
+    email: '',
+  });
 
   const { data: invites, isLoading, error } = useWorkspaceInvites(
     currentWorkspace?.workspaceId || '',
@@ -27,6 +35,13 @@ export const WorkspaceInvitations = () => {
       console.error('Failed to cancel invitation:', error);
       alert('❌ Failed to cancel invitation');
     }
+  };
+
+  const handleViewHistory = (email: string) => {
+    setHistoryDialog({
+      isOpen: true,
+      email,
+    });
   };
 
   const getStatusIcon = (status: string) => {
@@ -89,6 +104,19 @@ export const WorkspaceInvitations = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* History Dialog */}
+      <InvitationHistoryDialog
+        isOpen={historyDialog.isOpen}
+        onClose={() =>
+          setHistoryDialog({
+            isOpen: false,
+            email: '',
+          })
+        }
+        workspaceId={currentWorkspace?.workspaceId || ''}
+        email={historyDialog.email}
+      />
+
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Workspace Invitations</h1>
@@ -237,16 +265,29 @@ export const WorkspaceInvitations = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {invite.status === 'PENDING' && (
+                        <div className="flex items-center gap-2">
+                          {/* History Button - Available for all invitations */}
                           <button
-                            onClick={() => handleCancelInvitation(invite.id, invite.email)}
-                            disabled={cancelMutation.isPending}
-                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            onClick={() => handleViewHistory(invite.email)}
+                            className="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+                            title="View invitation history"
                           >
-                            <XIcon className="h-3 w-3 mr-1" />
-                            Cancel
+                            <History className="h-3 w-3 mr-1" />
+                            History
                           </button>
-                        )}
+
+                          {/* Cancel Button - Only for PENDING invitations */}
+                          {invite.status === 'PENDING' && (
+                            <button
+                              onClick={() => handleCancelInvitation(invite.id, invite.email)}
+                              disabled={cancelMutation.isPending}
+                              className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              <XIcon className="h-3 w-3 mr-1" />
+                              Cancel
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
