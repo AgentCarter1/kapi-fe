@@ -126,16 +126,8 @@ export const WorkspaceAccounts = () => {
 
   return (
     <>
-      {/* Header with Invite Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-xl font-bold text-gray-800 dark:text-white/90">
-            Workspace Members
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Manage members of <span className="font-semibold text-gray-700 dark:text-gray-300">{currentWorkspace.workspaceName}</span>
-          </p>
-        </div>
+      {/* Invite Button */}
+      <div className="flex justify-end mb-6">
         <button
           onClick={() => setIsInviteDialogOpen(true)}
           className="inline-flex items-center justify-center px-4 py-2.5 bg-brand-500 text-white text-sm font-medium rounded-lg hover:bg-brand-600 transition-colors shadow-theme-xs dark:bg-brand-600 dark:hover:bg-brand-700"

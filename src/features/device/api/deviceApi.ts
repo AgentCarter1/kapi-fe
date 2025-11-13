@@ -7,7 +7,6 @@ import {
   type GetDevicesFilters,
   type CreateDeviceRequest,
   type UpdateDeviceRequest,
-  type Device,
 } from '../../../api/endpoints/devices';
 
 // Query Keys

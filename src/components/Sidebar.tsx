@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, Mail, ChevronDown, ChevronRight, Building2, Cpu } from 'lucide-react';
+import { Home, Settings, ChevronDown, ChevronRight, Building2, Cpu } from 'lucide-react';
 import { useSidebar } from '../context/SidebarContext';
 
 type MenuItem = {
@@ -34,19 +34,9 @@ export const Sidebar = () => {
       icon: <Cpu className="w-5 h-5" />,
     },
     {
-      name: 'Workspace',
-      path: '/workspace/members',
-      icon: <Users className="w-5 h-5" />,
-      children: [
-        {
-          name: 'Members',
-          path: '/workspace/members',
-        },
-        {
-          name: 'Invitations',
-          path: '/workspace/invitations',
-        },
-      ],
+      name: 'Workspace Settings',
+      path: '/workspace/settings',
+      icon: <Settings className="w-5 h-5" />,
     },
   ];
 

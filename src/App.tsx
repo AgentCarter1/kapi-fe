@@ -5,8 +5,7 @@ import { AccountInvites } from './features/account/components/AccountInvites';
 import { LoginForm } from './features/auth/components/LoginForm';
 import { SignUpForm } from './features/auth/components/SignUpForm';
 import { VerifyAccountForm } from './features/auth/components/VerifyAccountForm';
-import { WorkspaceAccounts } from './features/workspace/components/WorkspaceAccounts';
-import { WorkspaceInvitations } from './features/workspace/components/WorkspaceInvitations';
+import { WorkspaceSettings } from './features/workspace/pages/WorkspaceSettings';
 import { Zones } from './features/zone/pages/Zones';
 import { Devices } from './features/device/pages/Devices';
 import { DashboardLayout } from './layouts/DashboardLayout';
@@ -141,25 +140,18 @@ function App() {
           }
         />
         <Route
-          path="/workspace/members"
+          path="/workspace/settings"
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <WorkspaceAccounts />
+                <WorkspaceSettings />
               </DashboardLayout>
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/workspace/invitations"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <WorkspaceInvitations />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
+        {/* Redirect old routes to new settings page */}
+        <Route path="/workspace/members" element={<Navigate to="/workspace/settings" replace />} />
+        <Route path="/workspace/invitations" element={<Navigate to="/workspace/settings" replace />} />
         
         {/* Redirect root based on auth status */}
         <Route 
