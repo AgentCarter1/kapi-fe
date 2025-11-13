@@ -17,6 +17,15 @@ export const WorkspaceInvitations = () => {
     isOpen: false,
     email: '',
   });
+  const [cancelConfirm, setCancelConfirm] = useState<{
+    isOpen: boolean;
+    invitationId: string;
+    email: string;
+  }>({
+    isOpen: false,
+    invitationId: '',
+    email: '',
+  });
 
   const { data: invites, isLoading, error } = useWorkspaceInvites(
     currentWorkspace?.workspaceId || '',
