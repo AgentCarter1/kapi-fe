@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, Mail, ChevronDown, ChevronRight, Building2 } from 'lucide-react';
+import { Home, Users, Mail, ChevronDown, ChevronRight, Building2, Cpu } from 'lucide-react';
 import { useSidebar } from '../context/SidebarContext';
 
 type MenuItem = {
@@ -27,6 +27,11 @@ export const Sidebar = () => {
       name: 'Zones',
       path: '/zones',
       icon: <Building2 className="w-5 h-5" />,
+    },
+    {
+      name: 'Devices',
+      path: '/devices',
+      icon: <Cpu className="w-5 h-5" />,
     },
     {
       name: 'Workspace',

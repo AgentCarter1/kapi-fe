@@ -1,12 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  getZones,
-  createZone,
-  updateZone,
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { 
+  getZones, 
+  createZone, 
+  updateZone, 
   deleteZone,
-  type CreateZoneRequest,
-  type UpdateZoneRequest,
-  type Zone,
+  type Zone, 
+  type CreateZoneRequest, 
+  type UpdateZoneRequest 
 } from '../../../api/endpoints/zones';
 
 // Query Keys
@@ -16,14 +16,13 @@ export const zoneKeys = {
 };
 
 /**
- * Get zones tree for workspace
+ * Get zones tree query
  */
-export const useZones = (workspaceId: string | undefined) => {
+export const useZones = (workspaceId: string) => {
   return useQuery({
-    queryKey: zoneKeys.workspace(workspaceId!),
-    queryFn: () => getZones(workspaceId!),
+    queryKey: zoneKeys.workspace(workspaceId),
+    queryFn: () => getZones(workspaceId),
     enabled: !!workspaceId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
 
@@ -70,3 +69,40 @@ export const useDeleteZone = (workspaceId: string) => {
   });
 };
 
+/**
+ * Flatten zone tree to a list (for dropdowns)
+ * Adds depth and full path for better UX
+ */
+export const flattenZones = (zones: Zone[], depth = 0, parentPath = ''): FlatZone[] => {
+  return zones.reduce<FlatZone[]>((acc, zone) => {
+    const currentPath = parentPath ? `${parentPath} > ${zone.name}` : zone.name;
+    
+    // Add current zone
+    acc.push({
+      id: zone.id,
+      name: zone.name,
+      fullPath: currentPath,
+      depth,
+      zoneTypeId: zone.zoneTypeId,
+      zoneTypeName: zone.zoneTypeName,
+      isActive: zone.isActive,
+    });
+
+    // Add children recursively
+    if (zone.children && zone.children.length > 0) {
+      acc.push(...flattenZones(zone.children, depth + 1, currentPath));
+    }
+
+    return acc;
+  }, []);
+};
+
+export type FlatZone = {
+  id: string;
+  name: string;
+  fullPath: string;
+  depth: number;
+  zoneTypeId: string;
+  zoneTypeName?: string;
+  isActive: boolean;
+};

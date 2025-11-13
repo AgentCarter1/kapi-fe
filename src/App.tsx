@@ -8,6 +8,7 @@ import { VerifyAccountForm } from './features/auth/components/VerifyAccountForm'
 import { WorkspaceAccounts } from './features/workspace/components/WorkspaceAccounts';
 import { WorkspaceInvitations } from './features/workspace/components/WorkspaceInvitations';
 import { Zones } from './features/zone/pages/Zones';
+import { Devices } from './features/device/pages/Devices';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { useAppSelector } from './store/hooks';
 
@@ -125,6 +126,16 @@ function App() {
             <ProtectedRoute>
               <DashboardLayout>
                 <Zones />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/devices"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Devices />
               </DashboardLayout>
             </ProtectedRoute>
           }
