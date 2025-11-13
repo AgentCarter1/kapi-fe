@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { X, Building2, Star, LogOut, Crown, Shield, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import toast from 'react-hot-toast';
 import { getAccountWorkspaces } from "../../../api/endpoints/workspaces";
 import { useLeaveWorkspace, useSetDefaultWorkspace } from "../api/workspaceApi";
+import { ConfirmDialog } from "../../../components/ConfirmDialog";
 
 interface WorkspaceManagementDialogProps {
   isOpen: boolean;
@@ -13,6 +15,16 @@ const WorkspaceManagementDialog: React.FC<WorkspaceManagementDialogProps> = ({
   isOpen,
   onClose,
 }) => {
+  const [leaveConfirm, setLeaveConfirm] = useState<{
+    isOpen: boolean;
+    workspaceId: string;
+    workspaceName: string;
+  }>({
+    isOpen: false,
+    workspaceId: '',
+    workspaceName: '',
+  });
+
   const { data: workspaces, isLoading, error } = useQuery({
     queryKey: ["account-workspaces"],
     queryFn: getAccountWorkspaces,
@@ -22,36 +34,34 @@ const WorkspaceManagementDialog: React.FC<WorkspaceManagementDialogProps> = ({
   const leaveMutation = useLeaveWorkspace();
   const setDefaultMutation = useSetDefaultWorkspace();
 
-  const handleLeaveWorkspace = async (
+  const handleLeaveWorkspace = (
     workspaceId: string,
     workspaceName: string,
     accountType: string
   ) => {
     if (accountType === "primaryOwner") {
-      alert(
-        "❌ Primary owners cannot leave the workspace. Please transfer ownership first."
-      );
+      toast.error("Primary owners cannot leave the workspace. Please transfer ownership first.", {
+        duration: 5000,
+      });
       return;
     }
 
-    if (
-      !confirm(
-        `Are you sure you want to leave "${workspaceName}"? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
+    setLeaveConfirm({ isOpen: true, workspaceId, workspaceName });
+  };
+
+  const handleConfirmLeave = async () => {
+    const { workspaceId, workspaceName } = leaveConfirm;
+    if (!workspaceId) return;
+
+    const toastId = toast.loading('Leaving workspace...');
 
     try {
       await leaveMutation.mutateAsync(workspaceId);
-      alert(`✅ Successfully left "${workspaceName}"`);
+      toast.success(`Successfully left "${workspaceName}"`, { id: toastId });
     } catch (error: any) {
       console.error("Failed to leave workspace:", error);
-      alert(
-        `❌ Failed to leave workspace: ${
-          error.response?.data?.message || error.message
-        }`
-      );
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to leave workspace';
+      toast.error(errorMessage, { id: toastId });
     }
   };
 
@@ -59,16 +69,18 @@ const WorkspaceManagementDialog: React.FC<WorkspaceManagementDialogProps> = ({
     workspaceId: string,
     workspaceName: string
   ) => {
+    const toastId = toast.loading('Setting default workspace...');
+
     try {
       await setDefaultMutation.mutateAsync(workspaceId);
-      alert(`⭐ "${workspaceName}" is now your default workspace`);
+      toast.success(`"${workspaceName}" is now your default workspace`, { 
+        id: toastId,
+        icon: '⭐',
+      });
     } catch (error: any) {
       console.error("Failed to set default workspace:", error);
-      alert(
-        `❌ Failed to set default workspace: ${
-          error.response?.data?.message || error.message
-        }`
-      );
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to set default workspace';
+      toast.error(errorMessage, { id: toastId });
     }
   };
 
@@ -293,6 +305,18 @@ const WorkspaceManagementDialog: React.FC<WorkspaceManagementDialogProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Leave Workspace Confirmation */}
+      <ConfirmDialog
+        isOpen={leaveConfirm.isOpen}
+        onClose={() => setLeaveConfirm({ isOpen: false, workspaceId: '', workspaceName: '' })}
+        onConfirm={handleConfirmLeave}
+        title="Leave Workspace"
+        message={`Are you sure you want to leave "${leaveConfirm.workspaceName}"? This action cannot be undone.`}
+        confirmText="Leave Workspace"
+        cancelText="Stay"
+        variant="danger"
+      />
     </div>
   );
 };

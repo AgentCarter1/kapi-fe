@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { getAccountSelf } from '../api/accountApi';
 import { createPhone, updatePhone, deletePhone } from '../api/phoneApi';
 import { createAddress, updateAddress, deleteAddress } from '../api/addressApi';
 import { PhoneFormDialog, type PhoneFormData } from './PhoneFormDialog';
 import { AddressFormDialog, type AddressFormData } from './AddressFormDialog';
+import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import type { PhoneResponse, AddressResponse } from '../../../types';
 import { User, Mail, Shield, Clock, Phone, MapPin, Edit2, Trash2, Plus, CheckCircle, XCircle } from 'lucide-react';
 
@@ -23,6 +25,24 @@ export const AccountProfile = () => {
     isOpen: false,
     address: null,
   });
+  const [deletePhoneConfirm, setDeletePhoneConfirm] = useState<{
+    isOpen: boolean;
+    phoneId: string;
+    phoneName: string;
+  }>({
+    isOpen: false,
+    phoneId: '',
+    phoneName: '',
+  });
+  const [deleteAddressConfirm, setDeleteAddressConfirm] = useState<{
+    isOpen: boolean;
+    addressId: string;
+    addressName: string;
+  }>({
+    isOpen: false,
+    addressId: '',
+    addressName: '',
+  });
 
   const { data: account, isLoading, error } = useQuery({
     queryKey: ['account', 'self'],
@@ -35,10 +55,11 @@ export const AccountProfile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['account', 'self'] });
       setPhoneDialog({ isOpen: false, phone: null });
-      alert('✅ Phone added successfully!');
+      toast.success('Phone added successfully!');
     },
     onError: (error: any) => {
-      alert(`❌ Error: ${error.response?.data?.message || error.message}`);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to add phone';
+      toast.error(errorMessage);
     },
   });
 
@@ -47,10 +68,11 @@ export const AccountProfile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['account', 'self'] });
       setPhoneDialog({ isOpen: false, phone: null });
-      alert('✅ Phone updated successfully!');
+      toast.success('Phone updated successfully!');
     },
     onError: (error: any) => {
-      alert(`❌ Error: ${error.response?.data?.message || error.message}`);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update phone';
+      toast.error(errorMessage);
     },
   });
 
@@ -58,10 +80,11 @@ export const AccountProfile = () => {
     mutationFn: deletePhone,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['account', 'self'] });
-      alert('🗑️ Phone deleted successfully!');
+      toast.success('Phone deleted successfully!');
     },
     onError: (error: any) => {
-      alert(`❌ Error: ${error.response?.data?.message || error.message}`);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to delete phone';
+      toast.error(errorMessage);
     },
   });
 
@@ -71,10 +94,11 @@ export const AccountProfile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['account', 'self'] });
       setAddressDialog({ isOpen: false, address: null });
-      alert('✅ Address added successfully!');
+      toast.success('Address added successfully!');
     },
     onError: (error: any) => {
-      alert(`❌ Error: ${error.response?.data?.message || error.message}`);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to add address';
+      toast.error(errorMessage);
     },
   });
 
@@ -83,10 +107,11 @@ export const AccountProfile = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['account', 'self'] });
       setAddressDialog({ isOpen: false, address: null });
-      alert('✅ Address updated successfully!');
+      toast.success('Address updated successfully!');
     },
     onError: (error: any) => {
-      alert(`❌ Error: ${error.response?.data?.message || error.message}`);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update address';
+      toast.error(errorMessage);
     },
   });
 
@@ -94,10 +119,11 @@ export const AccountProfile = () => {
     mutationFn: deleteAddress,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['account', 'self'] });
-      alert('🗑️ Address deleted successfully!');
+      toast.success('Address deleted successfully!');
     },
     onError: (error: any) => {
-      alert(`❌ Error: ${error.response?.data?.message || error.message}`);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to delete address';
+      toast.error(errorMessage);
     },
   });
 
@@ -118,16 +144,30 @@ export const AccountProfile = () => {
     }
   };
 
-  const handleDeletePhone = (id: string) => {
-    if (confirm('Are you sure you want to delete this phone?')) {
-      deletePhoneMutation.mutate(id);
-    }
+  const handleDeletePhone = (phone: PhoneResponse) => {
+    setDeletePhoneConfirm({ 
+      isOpen: true, 
+      phoneId: phone.id, 
+      phoneName: phone.name || phone.phoneNumber 
+    });
   };
 
-  const handleDeleteAddress = (id: string) => {
-    if (confirm('Are you sure you want to delete this address?')) {
-      deleteAddressMutation.mutate(id);
-    }
+  const handleConfirmDeletePhone = () => {
+    if (!deletePhoneConfirm.phoneId) return;
+    deletePhoneMutation.mutate(deletePhoneConfirm.phoneId);
+  };
+
+  const handleDeleteAddress = (address: AddressResponse) => {
+    setDeleteAddressConfirm({ 
+      isOpen: true, 
+      addressId: address.id, 
+      addressName: address.name || address.line1 
+    });
+  };
+
+  const handleConfirmDeleteAddress = () => {
+    if (!deleteAddressConfirm.addressId) return;
+    deleteAddressMutation.mutate(deleteAddressConfirm.addressId);
   };
 
   if (isLoading) {
@@ -443,7 +483,7 @@ export const AccountProfile = () => {
                               <Edit2 className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => handleDeletePhone(phone.id)}
+                              onClick={() => handleDeletePhone(phone)}
                               disabled={deletePhoneMutation.isPending}
                               className="p-2 text-gray-600 dark:text-gray-400 hover:text-error-600 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950 rounded-lg transition-colors disabled:opacity-50"
                               title="Delete phone"
@@ -527,7 +567,7 @@ export const AccountProfile = () => {
                               <Edit2 className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => handleDeleteAddress(address.id)}
+                              onClick={() => handleDeleteAddress(address)}
                               disabled={deleteAddressMutation.isPending}
                               className="p-2 text-gray-600 dark:text-gray-400 hover:text-error-600 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-950 rounded-lg transition-colors disabled:opacity-50"
                               title="Delete address"
@@ -573,6 +613,30 @@ export const AccountProfile = () => {
         onSubmit={handleAddressSubmit}
         address={addressDialog.address}
         isLoading={createAddressMutation.isPending || updateAddressMutation.isPending}
+      />
+
+      {/* Delete Phone Confirmation */}
+      <ConfirmDialog
+        isOpen={deletePhoneConfirm.isOpen}
+        onClose={() => setDeletePhoneConfirm({ isOpen: false, phoneId: '', phoneName: '' })}
+        onConfirm={handleConfirmDeletePhone}
+        title="Delete Phone"
+        message={`Are you sure you want to delete "${deletePhoneConfirm.phoneName}"?`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
+
+      {/* Delete Address Confirmation */}
+      <ConfirmDialog
+        isOpen={deleteAddressConfirm.isOpen}
+        onClose={() => setDeleteAddressConfirm({ isOpen: false, addressId: '', addressName: '' })}
+        onConfirm={handleConfirmDeleteAddress}
+        title="Delete Address"
+        message={`Are you sure you want to delete "${deleteAddressConfirm.addressName}"?`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
       />
     </>
   );

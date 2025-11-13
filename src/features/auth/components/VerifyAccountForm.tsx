@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { verifyAccount } from '../api/authApi';
 import { useAppDispatch } from '../../../store/hooks';
 import { setCredentials } from '../../../store/slices/authSlice';
@@ -65,7 +66,8 @@ export const VerifyAccountForm = () => {
     },
     onError: (error: any) => {
       console.error('Verification failed:', error.response?.data?.message || error.message);
-      alert('❌ Verification failed: ' + (error.response?.data?.message || 'Invalid OTP code'));
+      const errorMessage = error.response?.data?.message || 'Invalid OTP code';
+      toast.error(`Verification failed: ${errorMessage}`);
     },
   });
 
@@ -159,7 +161,7 @@ export const VerifyAccountForm = () => {
                 Didn't receive the code?{' '}
                 <button
                   type="button"
-                  onClick={() => alert('Resend feature will be implemented')}
+                  onClick={() => toast('Resend feature will be implemented soon', { icon: 'ℹ️' })}
                   className="font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
                 >
                   Resend code

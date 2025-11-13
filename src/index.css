@@ -5,6 +5,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Toast Notification Theme Variables */
+:root {
+  --toast-bg: #ffffff;
+  --toast-color: #1f2937;
+  --toast-border: #e5e7eb;
+}
+
+.dark {
+  --toast-bg: #1f2937;
+  --toast-color: #f9fafb;
+  --toast-border: #374151;
+}
+
 @layer base {
   body {
     @apply relative text-base font-normal bg-gray-50 font-sans antialiased;

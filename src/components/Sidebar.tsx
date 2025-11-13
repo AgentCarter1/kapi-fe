@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, Mail, ChevronDown, ChevronRight } from 'lucide-react';
+import { Home, Users, Mail, ChevronDown, ChevronRight, Building2 } from 'lucide-react';
 import { useSidebar } from '../context/SidebarContext';
 
 type MenuItem = {
@@ -22,6 +22,11 @@ export const Sidebar = () => {
       name: 'Dashboard',
       path: '/dashboard',
       icon: <Home className="w-5 h-5" />,
+    },
+    {
+      name: 'Zones',
+      path: '/zones',
+      icon: <Building2 className="w-5 h-5" />,
     },
     {
       name: 'Workspace',
@@ -55,7 +60,7 @@ export const Sidebar = () => {
     <>
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 z-9999 flex h-screen flex-col overflow-y-hidden bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 duration-300 ease-linear lg:translate-x-0 ${
+        className={`fixed left-0 top-0 z-40 flex h-screen flex-col overflow-y-hidden bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 duration-300 ease-linear lg:translate-x-0 ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
         } ${
           shouldShowText ? 'w-[290px]' : 'w-[90px]'
@@ -159,7 +164,7 @@ export const Sidebar = () => {
       {/* Mobile Backdrop */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 z-9998 bg-black/20 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-black/20 backdrop-blur-sm lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}

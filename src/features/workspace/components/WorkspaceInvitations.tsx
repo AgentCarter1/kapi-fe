@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Mail, Calendar, Clock, CheckCircle, XCircle, Ban, HourglassIcon, X as XIcon, History } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useWorkspaceInvites, useCancelInvitation } from '../api/invitationApi';
 import { useAppSelector } from '../../../store/hooks';
+import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import InvitationHistoryDialog from './InvitationHistoryDialog';
 
 export const WorkspaceInvitations = () => {
@@ -23,17 +25,23 @@ export const WorkspaceInvitations = () => {
 
   const cancelMutation = useCancelInvitation(currentWorkspace?.workspaceId || '');
 
-  const handleCancelInvitation = async (invitationId: string, email: string) => {
-    if (!confirm(`Are you sure you want to cancel the invitation for ${email}?`)) {
-      return;
-    }
+  const handleCancelInvitation = (invitationId: string, email: string) => {
+    setCancelConfirm({ isOpen: true, invitationId, email });
+  };
 
+  const handleConfirmCancel = async () => {
+    const { invitationId, email } = cancelConfirm;
+    if (!invitationId) return;
+
+    const toastId = toast.loading('Cancelling invitation...');
+    
     try {
       await cancelMutation.mutateAsync(invitationId);
-      alert('🗑️ Invitation cancelled successfully');
-    } catch (error) {
+      toast.success(`Invitation for ${email} cancelled successfully`, { id: toastId });
+    } catch (error: any) {
       console.error('Failed to cancel invitation:', error);
-      alert('❌ Failed to cancel invitation');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to cancel invitation';
+      toast.error(errorMessage, { id: toastId });
     }
   };
 
@@ -304,6 +312,26 @@ export const WorkspaceInvitations = () => {
           )}
         </>
       )}
+
+      {/* Invitation History Dialog */}
+      <InvitationHistoryDialog
+        isOpen={historyDialog.isOpen}
+        onClose={() => setHistoryDialog({ isOpen: false, email: '' })}
+        workspaceId={currentWorkspace?.workspaceId || ''}
+        email={historyDialog.email}
+      />
+
+      {/* Cancel Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={cancelConfirm.isOpen}
+        onClose={() => setCancelConfirm({ isOpen: false, invitationId: '', email: '' })}
+        onConfirm={handleConfirmCancel}
+        title="Cancel Invitation"
+        message={`Are you sure you want to cancel the invitation for ${cancelConfirm.email}?`}
+        confirmText="Cancel Invitation"
+        cancelText="Keep Invitation"
+        variant="warning"
+      />
     </>
   );
 };

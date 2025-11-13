@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { signUp } from '../api/authApi';
 import type { SignUpRequest } from '../../../types';
 
@@ -35,7 +36,8 @@ export const SignUpForm = () => {
     },
     onError: (error: any) => {
       console.error('Sign up failed:', error.response?.data?.message || error.message);
-      alert('Sign up failed: ' + (error.response?.data?.message || 'Please try again'));
+      const errorMessage = error.response?.data?.message || 'Sign up failed. Please try again';
+      toast.error(errorMessage);
     },
   });
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Calendar } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useCreateInvite } from '../api/invitationApi';
 import type { AccessKeyData } from '../../../api/endpoints/workspaceInvitations';
 
@@ -61,7 +62,7 @@ export const InviteMemberDialog: React.FC<InviteMemberDialogProps> = ({
       });
 
       // Show success toast
-      alert('✨ Invitation sent successfully!');
+      toast.success('Invitation sent successfully!');
       
       // Reset form and close
       setEmail('');
@@ -72,9 +73,10 @@ export const InviteMemberDialog: React.FC<InviteMemberDialogProps> = ({
       setShowAdvanced(false);
       setShowAccessKeys(false);
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create invite:', error);
-      alert('❌ Failed to send invitation. Please try again.');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to send invitation';
+      toast.error(errorMessage);
     }
   };
 

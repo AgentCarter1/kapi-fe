@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { UserPlus, Trash2, History } from 'lucide-react';
 import { getWorkspaceAccounts } from '../../../api/endpoints/workspaceAccounts';
 import type { WorkspaceAccountsFilters } from '../../../api/endpoints/workspaceAccounts';
 import { useAppSelector } from '../../../store/hooks';
+import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { InviteMemberDialog } from './InviteMemberDialog';
 import MemberHistoryDialog from './MemberHistoryDialog';
 import { useRemoveAccount } from '../api/accountApi';
@@ -22,6 +24,15 @@ export const WorkspaceAccounts = () => {
     accountId: '',
     accountName: '',
     accountEmail: '',
+  });
+  const [removeConfirm, setRemoveConfirm] = useState<{
+    isOpen: boolean;
+    accountId: string;
+    email: string;
+  }>({
+    isOpen: false,
+    accountId: '',
+    email: '',
   });
 
   const removeMutation = useRemoveAccount(currentWorkspace?.workspaceId || '');
@@ -66,17 +77,23 @@ export const WorkspaceAccounts = () => {
     setFilters(newFilters);
   };
 
-  const handleRemoveAccount = async (accountId: string, email: string) => {
-    if (!confirm(`Are you sure you want to remove ${email} from this workspace?`)) {
-      return;
-    }
+  const handleRemoveAccount = (accountId: string, email: string) => {
+    setRemoveConfirm({ isOpen: true, accountId, email });
+  };
+
+  const handleConfirmRemove = async () => {
+    const { accountId, email } = removeConfirm;
+    if (!accountId) return;
+
+    const toastId = toast.loading('Removing member...');
 
     try {
       await removeMutation.mutateAsync(accountId);
-      alert('🗑️ Member removed successfully');
-    } catch (error) {
+      toast.success(`Member ${email} removed successfully`, { id: toastId });
+    } catch (error: any) {
       console.error('Failed to remove member:', error);
-      alert('❌ Failed to remove member');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to remove member';
+      toast.error(errorMessage, { id: toastId });
     }
   };
 
@@ -501,6 +518,17 @@ export const WorkspaceAccounts = () => {
           )}
         </>
       )}
+      {/* Remove Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={removeConfirm.isOpen}
+        onClose={() => setRemoveConfirm({ isOpen: false, accountId: '', email: '' })}
+        onConfirm={handleConfirmRemove}
+        title="Remove Member"
+        message={`Are you sure you want to remove ${removeConfirm.email} from this workspace?`}
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </>
   );
 };

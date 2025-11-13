@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { login } from '../api/authApi';
 import { useAppDispatch } from '../../../store/hooks';
 import { setCredentials } from '../../../store/slices/authSlice';
@@ -50,7 +51,7 @@ export const LoginForm = () => {
       }
       
       console.error('Login failed:', message);
-      alert('Login failed: ' + message);
+      toast.error(message);
     },
   });
 

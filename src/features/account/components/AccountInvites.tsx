@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useAccountInvites, useDeclineInvitation, useAcceptInvitation } from '../api/inviteApi';
 import { InviteStatus } from '../../../api/endpoints/accountInvites';
 import { Mail, Calendar, MapPin, Clock, Check, X, History } from 'lucide-react';
+import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import AccountInviteHistoryDialog from './AccountInviteHistoryDialog';
 
 export const AccountInvites = () => {
@@ -17,6 +19,24 @@ export const AccountInvites = () => {
     workspaceId: '',
     workspaceName: '',
   });
+  const [declineConfirm, setDeclineConfirm] = useState<{
+    isOpen: boolean;
+    invitationId: string;
+    zoneName: string;
+  }>({
+    isOpen: false,
+    invitationId: '',
+    zoneName: '',
+  });
+  const [acceptConfirm, setAcceptConfirm] = useState<{
+    isOpen: boolean;
+    invitationId: string;
+    zoneName: string;
+  }>({
+    isOpen: false,
+    invitationId: '',
+    zoneName: '',
+  });
 
   const { data: invites, isLoading, error } = useAccountInvites({
     status: selectedStatus,
@@ -25,31 +45,43 @@ export const AccountInvites = () => {
   const declineMutation = useDeclineInvitation();
   const acceptMutation = useAcceptInvitation();
 
-  const handleDeclineInvitation = async (invitationId: string, zoneName: string) => {
-    if (!confirm(`Are you sure you want to decline the invitation from "${zoneName}"?`)) {
-      return;
-    }
+  const handleDeclineInvitation = (invitationId: string, zoneName: string) => {
+    setDeclineConfirm({ isOpen: true, invitationId, zoneName });
+  };
 
+  const handleConfirmDecline = async () => {
+    const { invitationId } = declineConfirm;
+    if (!invitationId) return;
+
+    const toastId = toast.loading('Declining invitation...');
+    
     try {
       await declineMutation.mutateAsync(invitationId);
-      alert('❌ Invitation declined');
-    } catch (error) {
+      toast.success('Invitation declined', { id: toastId });
+    } catch (error: any) {
       console.error('Failed to decline invitation:', error);
-      alert('❌ Failed to decline invitation');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to decline invitation';
+      toast.error(errorMessage, { id: toastId });
     }
   };
 
-  const handleAcceptInvitation = async (invitationId: string, zoneName: string) => {
-    if (!confirm(`Accept the invitation from "${zoneName}"? You will become a member of this workspace.`)) {
-      return;
-    }
+  const handleAcceptInvitation = (invitationId: string, zoneName: string) => {
+    setAcceptConfirm({ isOpen: true, invitationId, zoneName });
+  };
 
+  const handleConfirmAccept = async () => {
+    const { invitationId, zoneName } = acceptConfirm;
+    if (!invitationId) return;
+
+    const toastId = toast.loading('Accepting invitation...');
+    
     try {
       await acceptMutation.mutateAsync(invitationId);
-      alert('✨ Invitation accepted! You are now a member of the workspace.');
-    } catch (error) {
+      toast.success(`Invitation accepted! You are now a member of ${zoneName}.`, { id: toastId, duration: 5000 });
+    } catch (error: any) {
       console.error('Failed to accept invitation:', error);
-      alert('❌ Failed to accept invitation');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to accept invitation';
+      toast.error(errorMessage, { id: toastId });
     }
   };
 
@@ -334,6 +366,29 @@ export const AccountInvites = () => {
           )}
         </>
       )}
+      {/* Decline Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={declineConfirm.isOpen}
+        onClose={() => setDeclineConfirm({ isOpen: false, invitationId: '', zoneName: '' })}
+        onConfirm={handleConfirmDecline}
+        title="Decline Invitation"
+        message={`Are you sure you want to decline the invitation from "${declineConfirm.zoneName}"?`}
+        confirmText="Decline"
+        cancelText="Keep"
+        variant="warning"
+      />
+
+      {/* Accept Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={acceptConfirm.isOpen}
+        onClose={() => setAcceptConfirm({ isOpen: false, invitationId: '', zoneName: '' })}
+        onConfirm={handleConfirmAccept}
+        title="Accept Invitation"
+        message={`Accept the invitation from "${acceptConfirm.zoneName}"? You will become a member of this workspace.`}
+        confirmText="Accept"
+        cancelText="Cancel"
+        variant="info"
+      />
     </>
   );
 };
