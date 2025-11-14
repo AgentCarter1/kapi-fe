@@ -2,10 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   getZones, 
   createZone, 
+  createZoneTemplate,
   updateZone, 
   deleteZone,
   type Zone, 
-  type CreateZoneRequest, 
+  type CreateZoneRequest,
+  type CreateZoneTemplateRequest,
   type UpdateZoneRequest 
 } from '../../../api/endpoints/zones';
 
@@ -63,6 +65,20 @@ export const useDeleteZone = (workspaceId: string) => {
 
   return useMutation({
     mutationFn: (zoneId: string) => deleteZone(workspaceId, zoneId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: zoneKeys.workspace(workspaceId) });
+    },
+  });
+};
+
+/**
+ * Create zone template mutation
+ */
+export const useCreateZoneTemplate = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateZoneTemplateRequest) => createZoneTemplate(workspaceId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: zoneKeys.workspace(workspaceId) });
     },

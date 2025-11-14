@@ -54,6 +54,19 @@ export type CreateZoneRequest = {
   parentId?: string;
 };
 
+export type ZoneTemplateItem = {
+  name: string;
+  description?: string;
+  zoneType: ZoneType;
+  parentId?: string;
+  children?: ZoneTemplateItem[];
+};
+
+export type CreateZoneTemplateRequest = {
+  zones: ZoneTemplateItem[];
+  parentId?: string;
+};
+
 export type UpdateZoneRequest = {
   name?: string;
   description?: string;
@@ -138,6 +151,21 @@ export const deleteZone = async (workspaceId: string, zoneId: string): Promise<s
     },
   });
   return response.data.data.message;
+};
+
+/**
+ * Create zone template (bulk zone creation)
+ */
+export const createZoneTemplate = async (
+  workspaceId: string,
+  data: CreateZoneTemplateRequest,
+): Promise<Zone[]> => {
+  const response = await api.post<ZonesResponse>('/zones/template', data, {
+    headers: {
+      'workspace-id': workspaceId,
+    },
+  });
+  return response.data.data.zones;
 };
 
 /**

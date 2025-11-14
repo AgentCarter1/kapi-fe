@@ -5,9 +5,9 @@ import { ZoneTree } from '../components/ZoneTree';
 import { ZoneDialog } from '../components/ZoneDialog';
 import { ZoneUnitsList } from '../components/ZoneUnitsList';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
-import { useZones, useCreateZone, useUpdateZone, useDeleteZone } from '../api/zoneApi';
+import { useZones, useCreateZone, useCreateZoneTemplate, useUpdateZone, useDeleteZone } from '../api/zoneApi';
 import { useAppSelector } from '../../../store/hooks';
-import type { Zone, CreateZoneRequest, UpdateZoneRequest } from '../../../api/endpoints/zones';
+import type { Zone, CreateZoneRequest, CreateZoneTemplateRequest, UpdateZoneRequest } from '../../../api/endpoints/zones';
 import { ZoneType } from '../../../api/endpoints/zones';
 
 export const Zones = () => {
@@ -38,6 +38,7 @@ export const Zones = () => {
 
   // Mutations
   const createMutation = useCreateZone(currentWorkspace?.workspaceId || '');
+  const createTemplateMutation = useCreateZoneTemplate(currentWorkspace?.workspaceId || '');
   const updateMutation = useUpdateZone(currentWorkspace?.workspaceId || '');
   const deleteMutation = useDeleteZone(currentWorkspace?.workspaceId || '');
 
@@ -141,8 +142,22 @@ export const Zones = () => {
     }
   };
 
+  const handleTemplateSubmit = async (data: CreateZoneTemplateRequest) => {
+    const toastId = toast.loading('Creating zone template...');
+    
+    try {
+      await createTemplateMutation.mutateAsync(data);
+      toast.success('Zone template created successfully ✨', { id: toastId });
+      setDialog({ isOpen: false });
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Operation failed';
+      toast.error(errorMessage, { id: toastId });
+      throw error; // Re-throw to keep dialog open
+    }
+  };
+
   const handleDialogClose = () => {
-    if (!createMutation.isPending && !updateMutation.isPending) {
+    if (!createMutation.isPending && !createTemplateMutation.isPending && !updateMutation.isPending) {
       setDialog({ isOpen: false });
     }
   };
@@ -210,9 +225,10 @@ export const Zones = () => {
         isOpen={dialog.isOpen}
         onClose={handleDialogClose}
         onSubmit={handleDialogSubmit}
+        onSubmitTemplate={handleTemplateSubmit}
         parentZone={dialog.parentZone}
         editZone={dialog.editZone}
-        isPending={createMutation.isPending || updateMutation.isPending}
+        isPending={createMutation.isPending || createTemplateMutation.isPending || updateMutation.isPending}
         forceZoneType={dialog.forceUnit ? ZoneType.UNIT : undefined}
       />
 
