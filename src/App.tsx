@@ -5,7 +5,12 @@ import { AccountInvites } from './features/account/components/AccountInvites';
 import { LoginForm } from './features/auth/components/LoginForm';
 import { SignUpForm } from './features/auth/components/SignUpForm';
 import { VerifyAccountForm } from './features/auth/components/VerifyAccountForm';
-import { WorkspaceSettings } from './features/workspace/pages/WorkspaceSettings';
+import { WorkspaceAccountsPage } from './features/workspace/pages/WorkspaceAccountsPage';
+import { WorkspaceInvitationsPage } from './features/workspace/pages/WorkspaceInvitationsPage';
+import { WorkspaceCredentialCodesPage } from './features/workspace/pages/WorkspaceCredentialCodesPage';
+import { WorkspaceAccessHistoryPage } from './features/workspace/pages/WorkspaceAccessHistoryPage';
+import { WorkspaceLicensePage } from './features/workspace/pages/WorkspaceLicensePage';
+import { WorkspaceAntiPassbacksPage } from './features/anti-passback/pages/WorkspaceAntiPassbacksPage';
 import { Zones } from './features/zone/pages/Zones';
 import { Devices } from './features/device/pages/Devices';
 import { DashboardLayout } from './layouts/DashboardLayout';
@@ -139,19 +144,73 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* Accounts Routes */}
         <Route
-          path="/workspace/settings"
+          path="/workspace/accounts/members"
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <WorkspaceSettings />
+                <WorkspaceAccountsPage />
               </DashboardLayout>
             </ProtectedRoute>
           }
         />
-        {/* Redirect old routes to new settings page */}
-        <Route path="/workspace/members" element={<Navigate to="/workspace/settings" replace />} />
-        <Route path="/workspace/invitations" element={<Navigate to="/workspace/settings" replace />} />
+        <Route
+          path="/workspace/accounts/invitations"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <WorkspaceInvitationsPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/workspace/accounts/credential-codes"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <WorkspaceCredentialCodesPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/workspace/accounts/access-history"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <WorkspaceAccessHistoryPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        {/* License Route */}
+        <Route
+          path="/workspace/license"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <WorkspaceLicensePage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        {/* Anti-passback Route */}
+        <Route
+          path="/workspace/anti-passback"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <WorkspaceAntiPassbacksPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        {/* Redirect old routes */}
+        <Route path="/workspace/members" element={<Navigate to="/workspace/accounts/members" replace />} />
+        <Route path="/workspace/invitations" element={<Navigate to="/workspace/accounts/invitations" replace />} />
+        <Route path="/workspace/settings" element={<Navigate to="/workspace/accounts/access-history" replace />} />
         
         {/* Redirect root based on auth status */}
         <Route 

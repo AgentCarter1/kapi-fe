@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Settings, ChevronDown, ChevronRight, Building2, Cpu } from 'lucide-react';
+import { Home, ChevronDown, ChevronRight, Building2, Cpu, Users, Shield, Lock } from 'lucide-react';
 import { useSidebar } from '../context/SidebarContext';
 
 type MenuItem = {
@@ -15,7 +15,7 @@ export const Sidebar = () => {
   const location = useLocation();
   const { isExpanded, isHovered, setIsHovered, isMobileOpen, setIsMobileOpen } = useSidebar();
   
-  const [openMenus, setOpenMenus] = useState<string[]>(['Workspace']); // Default open
+  const [openMenus, setOpenMenus] = useState<string[]>(['Accounts']); // Default open
 
   const menuItems: MenuItem[] = [
     {
@@ -34,13 +34,36 @@ export const Sidebar = () => {
       icon: <Cpu className="w-5 h-5" />,
     },
     {
-      name: 'Workspace Settings',
-      path: '/workspace/settings',
-      icon: <Settings className="w-5 h-5" />,
+      name: 'Accounts',
+      path: '/workspace/accounts/members',
+      icon: <Users className="w-5 h-5" />,
+      children: [
+        { name: 'Members', path: '/workspace/accounts/members' },
+        { name: 'Invitations', path: '/workspace/accounts/invitations' },
+        { name: 'Credential Codes', path: '/workspace/accounts/credential-codes' },
+        { name: 'Access History', path: '/workspace/accounts/access-history' },
+      ],
+    },
+    {
+      name: 'License',
+      path: '/workspace/license',
+      icon: <Shield className="w-5 h-5" />,
+    },
+    {
+      name: 'Anti-passback',
+      path: '/workspace/anti-passback',
+      icon: <Lock className="w-5 h-5" />,
     },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    // For parent items with children, check if any child is active
+    const item = menuItems.find((i) => i.path === path);
+    if (item?.children) {
+      return item.children.some((child) => location.pathname === child.path);
+    }
+    return location.pathname === path;
+  };
   const isMenuOpen = (name: string) => openMenus.includes(name);
 
   const toggleMenu = (name: string) => {
