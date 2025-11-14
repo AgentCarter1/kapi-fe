@@ -24,16 +24,6 @@ export const Sidebar = () => {
       icon: <Home className="w-5 h-5" />,
     },
     {
-      name: 'Zones',
-      path: '/zones',
-      icon: <Building2 className="w-5 h-5" />,
-    },
-    {
-      name: 'Devices',
-      path: '/devices',
-      icon: <Cpu className="w-5 h-5" />,
-    },
-    {
       name: 'Accounts',
       path: '/workspace/accounts/members',
       icon: <Users className="w-5 h-5" />,
@@ -45,14 +35,24 @@ export const Sidebar = () => {
       ],
     },
     {
-      name: 'License',
-      path: '/workspace/license',
-      icon: <Shield className="w-5 h-5" />,
+      name: 'Zones',
+      path: '/zones',
+      icon: <Building2 className="w-5 h-5" />,
+    },
+    {
+      name: 'Devices',
+      path: '/devices',
+      icon: <Cpu className="w-5 h-5" />,
     },
     {
       name: 'Anti-passback',
       path: '/workspace/anti-passback',
       icon: <Lock className="w-5 h-5" />,
+    },
+    {
+      name: 'License',
+      path: '/workspace/license',
+      icon: <Shield className="w-5 h-5" />,
     },
   ];
 
