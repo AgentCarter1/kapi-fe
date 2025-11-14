@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import type { Device, UpdateDeviceRequest } from '../../../api/endpoints/devices';
 import { useZones, flattenZones, type FlatZone } from '../../zone/api/zoneApi';
@@ -24,10 +24,24 @@ export const UpdateDeviceDialog = ({
   const [zoneId, setZoneId] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [isZoneDropdownOpen, setIsZoneDropdownOpen] = useState(false);
+  const zoneButtonRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
 
   // Fetch zones
-  const { data: zonesTree = [], isLoading: isLoadingZones } = useZones(currentWorkspace?.workspaceId || '');
+  const { data: zonesTree = [], isLoading: isLoadingZones, error: zonesError } = useZones(currentWorkspace?.workspaceId || '');
   const flatZones: FlatZone[] = flattenZones(zonesTree);
+
+  // Calculate dropdown position when opened
+  useEffect(() => {
+    if (isZoneDropdownOpen && zoneButtonRef.current) {
+      const rect = zoneButtonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  }, [isZoneDropdownOpen]);
 
   // Initialize form
   useEffect(() => {
@@ -126,15 +140,16 @@ export const UpdateDeviceDialog = ({
               </div>
 
               {/* Zone Selection (Optional) */}
-              <div>
+              <div className="relative">
                 <label 
                   htmlFor="deviceZone" 
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Zone (Optional)
                 </label>
-                <div className="relative">
+                <div>
                   <button
+                    ref={zoneButtonRef}
                     type="button"
                     onClick={() => setIsZoneDropdownOpen(!isZoneDropdownOpen)}
                     disabled={isPending || isLoadingZones}
@@ -156,12 +171,19 @@ export const UpdateDeviceDialog = ({
                     <>
                       {/* Backdrop */}
                       <div 
-                        className="fixed inset-0 z-10" 
+                        className="fixed inset-0 z-[100]" 
                         onClick={() => setIsZoneDropdownOpen(false)}
                       />
                       
                       {/* Options */}
-                      <div className="absolute z-20 mt-1 w-full max-h-60 overflow-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
+                      <div 
+                        className="fixed z-[110] max-h-60 overflow-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg"
+                        style={{
+                          top: `${dropdownPosition.top + 4}px`,
+                          left: `${dropdownPosition.left}px`,
+                          width: `${dropdownPosition.width}px`,
+                        }}
+                      >
                         {/* Clear Selection Option */}
                         <button
                           type="button"
@@ -174,9 +196,14 @@ export const UpdateDeviceDialog = ({
                           No zone (clear selection)
                         </button>
 
-                        {flatZones.length === 0 ? (
+                        {isLoadingZones ? (
                           <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
-                            No zones available
+                            Loading zones...
+                          </div>
+                        ) : flatZones.length === 0 ? (
+                          <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                            <div>No zones available</div>
+                            <div className="text-xs mt-1">Workspace: {currentWorkspace?.workspaceId || 'Not set'}</div>
                           </div>
                         ) : (
                           flatZones

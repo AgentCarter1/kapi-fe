@@ -74,6 +74,13 @@ export const useDeleteZone = (workspaceId: string) => {
  * Adds depth and full path for better UX
  */
 export const flattenZones = (zones: Zone[], depth = 0, parentPath = ''): FlatZone[] => {
+  if (!zones || !Array.isArray(zones)) {
+    console.warn('flattenZones received invalid input:', zones);
+    return [];
+  }
+
+  console.log(`flattenZones called with ${zones.length} zones at depth ${depth}`);
+  
   return zones.reduce<FlatZone[]>((acc, zone) => {
     const currentPath = parentPath ? `${parentPath} > ${zone.name}` : zone.name;
     
