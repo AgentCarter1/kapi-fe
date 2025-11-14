@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { Settings, Users, Mail, Shield, History, Lock } from 'lucide-react';
+import { Settings, Users, Mail, Shield, History, Lock, Key } from 'lucide-react';
 import { useAppSelector } from '../../../store/hooks';
 import { WorkspaceAccounts } from '../components/WorkspaceAccounts';
 import { WorkspaceInvitations } from '../components/WorkspaceInvitations';
 import { WorkspaceLicense } from '../components/WorkspaceLicense';
 import { WorkspaceAccessHistory } from '../components/WorkspaceAccessHistory';
 import { WorkspaceAntiPassbacks } from '../../anti-passback/components/WorkspaceAntiPassbacks';
+import { WorkspaceCredentialCodes } from '../components/WorkspaceCredentialCodes';
 
-type TabType = 'members' | 'invitations' | 'license' | 'history' | 'anti-passback';
+type TabType = 'members' | 'invitations' | 'license' | 'history' | 'anti-passback' | 'credential-codes';
 
 export const WorkspaceSettings = () => {
   const currentWorkspace = useAppSelector((state) => state.auth.currentWorkspace);
@@ -24,6 +25,7 @@ export const WorkspaceSettings = () => {
   const tabs = [
     { id: 'members' as TabType, label: 'Members', icon: Users },
     { id: 'invitations' as TabType, label: 'Invitations', icon: Mail },
+    { id: 'credential-codes' as TabType, label: 'Credential Codes', icon: Key },
     { id: 'license' as TabType, label: 'License', icon: Shield },
     { id: 'anti-passback' as TabType, label: 'Anti-passback', icon: Lock },
     { id: 'history' as TabType, label: 'Access History', icon: History },
@@ -78,6 +80,7 @@ export const WorkspaceSettings = () => {
       <div className="min-h-[400px]">
         {activeTab === 'members' && <WorkspaceAccounts />}
         {activeTab === 'invitations' && <WorkspaceInvitations />}
+        {activeTab === 'credential-codes' && <WorkspaceCredentialCodes />}
         {activeTab === 'license' && (
           <WorkspaceLicense workspaceId={currentWorkspace.workspaceId} />
         )}
