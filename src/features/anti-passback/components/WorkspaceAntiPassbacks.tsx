@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Shield, Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Shield, Plus, Pencil, Trash2, Loader2, MapPin } from 'lucide-react';
 import { useAppSelector } from '../../../store/hooks';
 import {
   useAntiPassbackTypes,
@@ -17,6 +17,7 @@ import type {
 } from '../../../api/endpoints/antiPassbacks';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { AntiPassbackWizard } from './wizard/AntiPassbackWizard';
+import { AssignZonesDialog } from './AssignZonesDialog';
 
 const formatBoolean = (value: any) => (value ? 'Yes' : 'No');
 
@@ -25,6 +26,13 @@ export const WorkspaceAntiPassbacks = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingAntiPassback, setEditingAntiPassback] = useState<AntiPassback | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    antiPassback: AntiPassback | null;
+  }>({
+    isOpen: false,
+    antiPassback: null,
+  });
+  const [assignZonesDialog, setAssignZonesDialog] = useState<{
     isOpen: boolean;
     antiPassback: AntiPassback | null;
   }>({
@@ -247,8 +255,18 @@ export const WorkspaceAntiPassbacks = () => {
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex items-center gap-2">
                       <button
+                        onClick={() =>
+                          setAssignZonesDialog({ isOpen: true, antiPassback: antiPassback })
+                        }
+                        className="p-2 text-sm text-brand-600 bg-brand-50 rounded-md hover:bg-brand-100 transition-colors dark:bg-brand-900/40 dark:text-brand-300 dark:hover:bg-brand-900/60"
+                        title="Assign Zones"
+                      >
+                        <MapPin className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() => setEditingAntiPassback(antiPassback)}
                         className="p-2 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+                        title="Edit"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
@@ -257,6 +275,7 @@ export const WorkspaceAntiPassbacks = () => {
                           setDeleteConfirm({ isOpen: true, antiPassback: antiPassback })
                         }
                         className="p-2 text-sm text-error-600 bg-error-50 rounded-md hover:bg-error-100 transition-colors dark:bg-error-900/40 dark:text-error-300 dark:hover:bg-error-900/60"
+                        title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -305,6 +324,16 @@ export const WorkspaceAntiPassbacks = () => {
         cancelText="Cancel"
         variant="danger"
       />
+
+      {/* Assign Zones Dialog */}
+      {assignZonesDialog.antiPassback && (
+        <AssignZonesDialog
+          isOpen={assignZonesDialog.isOpen}
+          onClose={() => setAssignZonesDialog({ isOpen: false, antiPassback: null })}
+          antiPassbackId={assignZonesDialog.antiPassback.id}
+          antiPassbackName={assignZonesDialog.antiPassback.name}
+        />
+      )}
     </div>
   );
 };

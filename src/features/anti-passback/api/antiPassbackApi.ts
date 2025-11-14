@@ -7,12 +7,16 @@ import {
   createAntiPassback,
   updateAntiPassback,
   deleteAntiPassback,
+  getZonesByAntiPassback,
+  assignZonesToAntiPassback,
+  removeZonesFromAntiPassback,
   type AntiPassbackTypeDefinition,
   type AntiPassbackParameterDefinition,
   type AntiPassbackListResponse,
   type AntiPassback,
   type CreateAntiPassbackPayload,
   type UpdateAntiPassbackPayload,
+  type Zone,
 } from '../../../api/endpoints/antiPassbacks';
 
 export const antiPassbackKeys = {
@@ -22,6 +26,7 @@ export const antiPassbackKeys = {
     [...antiPassbackKeys.all, 'detail', workspaceId, antiPassbackId] as const,
   types: () => [...antiPassbackKeys.all, 'types'] as const,
   parameterList: (typeId: string) => [...antiPassbackKeys.all, 'types', typeId] as const,
+  zones: (antiPassbackId: string) => [...antiPassbackKeys.all, 'zones', antiPassbackId] as const,
 };
 
 export const useAntiPassbackTypes = () => {
@@ -99,6 +104,40 @@ export const useDeleteAntiPassback = (workspaceId: string) => {
     mutationFn: (antiPassbackId: string) =>
       deleteAntiPassback(workspaceId, antiPassbackId),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: antiPassbackKeys.list(workspaceId) });
+    },
+  });
+};
+
+export const useZonesByAntiPassback = (antiPassbackId?: string) => {
+  return useQuery<Zone[]>({
+    queryKey: antiPassbackKeys.zones(antiPassbackId || 'unknown'),
+    queryFn: () => getZonesByAntiPassback(antiPassbackId!),
+    enabled: !!antiPassbackId,
+  });
+};
+
+export const useAssignZonesToAntiPassback = (workspaceId: string, antiPassbackId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (zoneIds: string[]) =>
+      assignZonesToAntiPassback(workspaceId, antiPassbackId, zoneIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: antiPassbackKeys.zones(antiPassbackId) });
+      queryClient.invalidateQueries({ queryKey: antiPassbackKeys.list(workspaceId) });
+    },
+  });
+};
+
+export const useRemoveZonesFromAntiPassback = (workspaceId: string, antiPassbackId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (zoneIds: string[]) =>
+      removeZonesFromAntiPassback(workspaceId, antiPassbackId, zoneIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: antiPassbackKeys.zones(antiPassbackId) });
       queryClient.invalidateQueries({ queryKey: antiPassbackKeys.list(workspaceId) });
     },
   });

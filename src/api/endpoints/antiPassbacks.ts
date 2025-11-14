@@ -186,4 +186,55 @@ export const deleteAntiPassback = async (
   return response.data.data.message;
 };
 
+// Re-export Zone type from zones endpoint
+export type { Zone } from './zones';
+
+type ZonesApiResponse = {
+  success: boolean;
+  customCode: number;
+  message: string;
+  data: Zone[];
+};
+
+export const getZonesByAntiPassback = async (antiPassbackId: string): Promise<Zone[]> => {
+  const response = await api.get<ZonesApiResponse>(
+    `/workspace/anti-passback/${antiPassbackId}/zones`,
+  );
+  return response.data.data;
+};
+
+export const assignZonesToAntiPassback = async (
+  workspaceId: string,
+  antiPassbackId: string,
+  zoneIds: string[],
+): Promise<string> => {
+  const response = await api.post<MessageResponse>(
+    `/workspace/anti-passback/${antiPassbackId}/zones`,
+    { zoneIds },
+    {
+      headers: {
+        'workspace-id': workspaceId,
+      },
+    },
+  );
+  return response.data.data.message;
+};
+
+export const removeZonesFromAntiPassback = async (
+  workspaceId: string,
+  antiPassbackId: string,
+  zoneIds: string[],
+): Promise<string> => {
+  const response = await api.delete<MessageResponse>(
+    `/workspace/anti-passback/${antiPassbackId}/zones`,
+    {
+      data: { zoneIds },
+      headers: {
+        'workspace-id': workspaceId,
+      },
+    },
+  );
+  return response.data.data.message;
+};
+
 
