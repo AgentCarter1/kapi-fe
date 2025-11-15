@@ -73,6 +73,7 @@ export const useCreateAntiPassback = (workspaceId: string) => {
       createAntiPassback(workspaceId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: antiPassbackKeys.list(workspaceId) });
+      queryClient.invalidateQueries({ queryKey: ['workspace-license', 'status', workspaceId] });
     },
   });
 };
@@ -105,6 +106,7 @@ export const useDeleteAntiPassback = (workspaceId: string) => {
       deleteAntiPassback(workspaceId, antiPassbackId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: antiPassbackKeys.list(workspaceId) });
+      queryClient.invalidateQueries({ queryKey: ['workspace-license', 'status', workspaceId] });
     },
   });
 };

@@ -9,6 +9,7 @@ import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { InviteMemberDialog } from './InviteMemberDialog';
 import MemberHistoryDialog from './MemberHistoryDialog';
 import { useRemoveAccount } from '../api/accountApi';
+import { useWorkspaceLicenseStatus } from '../api/workspaceLicenseApi';
 
 export const WorkspaceAccounts = () => {
   const currentWorkspace = useAppSelector((state) => state.auth.currentWorkspace);
@@ -36,6 +37,17 @@ export const WorkspaceAccounts = () => {
   });
 
   const removeMutation = useRemoveAccount(currentWorkspace?.workspaceId || '');
+  const { data: licenseStatus, isLoading: isLoadingLicenseStatus } = useWorkspaceLicenseStatus(currentWorkspace?.workspaceId || null);
+
+  // Check if user limit is reached
+  // Button is disabled while loading or if limit is reached
+  const isUserLimitReached = licenseStatus?.user.isLimitReached ?? false;
+  const isButtonDisabled = isLoadingLicenseStatus || isUserLimitReached;
+  const userLimitMessage = licenseStatus?.user && licenseStatus.user.max !== null && licenseStatus.user.max !== undefined
+    ? `User limit reached (${licenseStatus.user.current}/${licenseStatus.user.max}). Please upgrade your license to invite more members.`
+    : isLoadingLicenseStatus
+    ? 'Loading license status...'
+    : '';
 
   const [filters, setFilters] = useState<WorkspaceAccountsFilters>({
     page: 1,
@@ -128,13 +140,28 @@ export const WorkspaceAccounts = () => {
     <>
       {/* Invite Button */}
       <div className="flex justify-end mb-6">
-        <button
-          onClick={() => setIsInviteDialogOpen(true)}
-          className="inline-flex items-center justify-center px-4 py-2.5 bg-brand-500 text-white text-sm font-medium rounded-lg hover:bg-brand-600 transition-colors shadow-theme-xs dark:bg-brand-600 dark:hover:bg-brand-700"
-        >
-          <UserPlus className="h-5 w-5 mr-2" />
-          Invite Member
-        </button>
+        <div className="relative group">
+          <button
+            onClick={() => setIsInviteDialogOpen(true)}
+            disabled={isButtonDisabled}
+            className={`inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors shadow-theme-xs ${
+              isButtonDisabled
+                ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                : 'bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-700'
+            }`}
+          >
+            <UserPlus className="h-5 w-5 mr-2" />
+            Invite Member
+          </button>
+          {isButtonDisabled && userLimitMessage && (
+            <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 max-w-xs">
+              {userLimitMessage}
+              <div className="absolute top-full right-4 -mt-1">
+                <div className="border-4 border-transparent border-t-gray-900 dark:border-t-gray-800"></div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Invite Dialog */}

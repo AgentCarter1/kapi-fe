@@ -7,6 +7,7 @@ import { DeviceList } from '../components/DeviceList';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { useDevices, useCreateDevice, useUpdateDevice, useDeleteDevice } from '../api/deviceApi';
 import { useAppSelector } from '../../../store/hooks';
+import { useWorkspaceLicenseStatus } from '../../workspace/api/workspaceLicenseApi';
 import type { CreateDeviceRequest, UpdateDeviceRequest, Device, GetDevicesFilters } from '../../../api/endpoints/devices';
 
 export const Devices = () => {
@@ -39,6 +40,17 @@ export const Devices = () => {
   const createMutation = useCreateDevice(currentWorkspace?.workspaceId || '');
   const updateMutation = useUpdateDevice(currentWorkspace?.workspaceId || '');
   const deleteMutation = useDeleteDevice(currentWorkspace?.workspaceId || '');
+  const { data: licenseStatus, isLoading: isLoadingLicenseStatus } = useWorkspaceLicenseStatus(currentWorkspace?.workspaceId || null);
+
+  // Check if device limit is reached
+  // Button is disabled while loading or if limit is reached
+  const isDeviceLimitReached = licenseStatus?.device.isLimitReached ?? false;
+  const isButtonDisabled = isLoadingLicenseStatus || isDeviceLimitReached;
+  const deviceLimitMessage = licenseStatus?.device && licenseStatus.device.max !== null && licenseStatus.device.max !== undefined
+    ? `Device limit reached (${licenseStatus.device.current}/${licenseStatus.device.max}). Please upgrade your license to add more devices.`
+    : isLoadingLicenseStatus
+    ? 'Loading license status...'
+    : '';
 
   // Handlers
   const handleOpenCreateDialog = () => {
@@ -135,13 +147,28 @@ export const Devices = () => {
         </div>
 
         {/* Create Device Button */}
-        <button
-          onClick={handleOpenCreateDialog}
-          className="inline-flex items-center px-4 py-2 text-sm font-medium bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors shadow-theme-xs dark:bg-brand-600 dark:hover:bg-brand-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create Device
-        </button>
+        <div className="relative group">
+          <button
+            onClick={handleOpenCreateDialog}
+            disabled={isButtonDisabled}
+            className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors shadow-theme-xs ${
+              isButtonDisabled
+                ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                : 'bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-700'
+            }`}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create Device
+          </button>
+          {isButtonDisabled && deviceLimitMessage && (
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 max-w-xs">
+              {deviceLimitMessage}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                <div className="border-4 border-transparent border-t-gray-900 dark:border-t-gray-800"></div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Device List */}

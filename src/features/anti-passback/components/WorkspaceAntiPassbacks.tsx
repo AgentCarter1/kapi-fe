@@ -18,6 +18,7 @@ import type {
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { AntiPassbackWizard } from './wizard/AntiPassbackWizard';
 import { AssignZonesDialog } from './AssignZonesDialog';
+import { useWorkspaceLicenseStatus } from '../../workspace/api/workspaceLicenseApi';
 
 const formatBoolean = (value: any) => (value ? 'Yes' : 'No');
 
@@ -55,6 +56,17 @@ export const WorkspaceAntiPassbacks = () => {
   const createMutation = useCreateAntiPassback(currentWorkspace?.workspaceId || '');
   const updateMutation = useUpdateAntiPassback(currentWorkspace?.workspaceId || '');
   const deleteMutation = useDeleteAntiPassback(currentWorkspace?.workspaceId || '');
+  const { data: licenseStatus, isLoading: isLoadingLicenseStatus } = useWorkspaceLicenseStatus(currentWorkspace?.workspaceId || null);
+
+  // Check if anti-passback feature is enabled
+  // Button is disabled while loading or if feature is not enabled
+  const isAntiPassbackEnabled = licenseStatus?.antiPassback.enabled ?? false;
+  const isButtonDisabled = isLoadingLicenseStatus || !isAntiPassbackEnabled;
+  const antiPassbackFeatureMessage = !isAntiPassbackEnabled
+    ? isLoadingLicenseStatus
+      ? 'Loading license status...'
+      : 'Anti-passback feature is not enabled in your license. Please upgrade your license to use this feature.'
+    : '';
 
   const handleCreate = async (payload: CreateAntiPassbackPayload) => {
     const toastId = toast.loading('Creating anti-passback rule...');
@@ -175,13 +187,28 @@ export const WorkspaceAntiPassbacks = () => {
             </span>
           </p>
         </div>
-        <button
-          onClick={() => setIsCreateOpen(true)}
-          className="inline-flex items-center justify-center px-4 py-2.5 bg-brand-500 text-white text-sm font-medium rounded-lg hover:bg-brand-600 transition-colors shadow-theme-xs dark:bg-brand-600 dark:hover:bg-brand-700"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Create Anti-passback
-        </button>
+        <div className="relative group">
+          <button
+            onClick={() => setIsCreateOpen(true)}
+            disabled={isButtonDisabled}
+            className={`inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors shadow-theme-xs ${
+              isButtonDisabled
+                ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                : 'bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-700'
+            }`}
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Create Anti-passback
+          </button>
+          {isButtonDisabled && antiPassbackFeatureMessage && (
+            <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 max-w-xs">
+              {antiPassbackFeatureMessage}
+              <div className="absolute top-full right-4 -mt-1">
+                <div className="border-4 border-transparent border-t-gray-900 dark:border-t-gray-800"></div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {items.length === 0 ? (
@@ -193,13 +220,28 @@ export const WorkspaceAntiPassbacks = () => {
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
             Create an anti-passback rule to enforce entry/exit policies across your workspace.
           </p>
-          <button
-            onClick={() => setIsCreateOpen(true)}
-            className="inline-flex items-center justify-center px-4 py-2.5 bg-brand-500 text-white text-sm font-medium rounded-lg hover:bg-brand-600 transition-colors shadow-theme-xs dark:bg-brand-600 dark:hover:bg-brand-700"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Create Anti-passback
-          </button>
+          <div className="relative group inline-block">
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              disabled={isButtonDisabled}
+              className={`inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors shadow-theme-xs ${
+                isButtonDisabled
+                  ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                  : 'bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-700'
+              }`}
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Create Anti-passback
+            </button>
+            {isButtonDisabled && antiPassbackFeatureMessage && (
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 max-w-xs">
+                {antiPassbackFeatureMessage}
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                  <div className="border-4 border-transparent border-t-gray-900 dark:border-t-gray-800"></div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         <div className="overflow-x-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-theme-xs">

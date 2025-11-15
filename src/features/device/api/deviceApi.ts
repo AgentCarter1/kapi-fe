@@ -39,6 +39,7 @@ export const useCreateDevice = (workspaceId: string) => {
     mutationFn: (data: CreateDeviceRequest) => createDevice(workspaceId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: deviceKeys.workspace(workspaceId) });
+      queryClient.invalidateQueries({ queryKey: ['workspace-license', 'status', workspaceId] });
     },
   });
 };
@@ -68,6 +69,7 @@ export const useDeleteDevice = (workspaceId: string) => {
     mutationFn: (deviceId: string) => deleteDevice(workspaceId, deviceId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: deviceKeys.workspace(workspaceId) });
+      queryClient.invalidateQueries({ queryKey: ['workspace-license', 'status', workspaceId] });
     },
   });
 };

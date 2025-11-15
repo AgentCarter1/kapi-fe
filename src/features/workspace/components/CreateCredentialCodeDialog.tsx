@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import { createCredentialCode } from '../api/credentialCodeApi';
 import type { PhoneFormData } from '../../account/components/PhoneFormDialog';
 
@@ -28,6 +29,7 @@ export const CreateCredentialCodeDialog = ({
   workspaceId,
   onSuccess,
 }: CreateCredentialCodeDialogProps) => {
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [phone, setPhone] = useState<PhoneFormData | null>(null);
   const [isPhoneFormOpen, setIsPhoneFormOpen] = useState(false);
@@ -131,6 +133,8 @@ export const CreateCredentialCodeDialog = ({
         isDefault: false,
       });
       toast.success('Credential code created successfully ✨');
+      queryClient.invalidateQueries({ queryKey: ['credential-codes', workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ['workspace-license', 'status', workspaceId] });
       onSuccess?.();
       onClose();
     } catch (error: any) {

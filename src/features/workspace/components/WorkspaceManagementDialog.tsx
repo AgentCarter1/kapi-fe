@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { X, Building2, Star, LogOut, Crown, Shield, Users } from "lucide-react";
+import { X, Building2, Star, LogOut, Crown, Shield, Users, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import toast from 'react-hot-toast';
 import { getAccountWorkspaces } from "../../../api/endpoints/workspaces";
 import { useLeaveWorkspace, useSetDefaultWorkspace } from "../api/workspaceApi";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
+import { CreateWorkspaceDialog } from "./CreateWorkspaceDialog";
 
 interface WorkspaceManagementDialogProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ const WorkspaceManagementDialog: React.FC<WorkspaceManagementDialogProps> = ({
     workspaceId: '',
     workspaceName: '',
   });
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const { data: workspaces, isLoading, error } = useQuery({
     queryKey: ["account-workspaces"],
@@ -149,12 +151,21 @@ const WorkspaceManagementDialog: React.FC<WorkspaceManagementDialogProps> = ({
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-2 hover:bg-white/50 dark:hover:bg-gray-800/50 rounded-lg"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="inline-flex items-center justify-center px-4 py-2 bg-brand-500 text-white text-sm font-medium rounded-lg hover:bg-brand-600 transition-colors shadow-theme-xs dark:bg-brand-600 dark:hover:bg-brand-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Workspace
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-2 hover:bg-white/50 dark:hover:bg-gray-800/50 rounded-lg"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -316,6 +327,15 @@ const WorkspaceManagementDialog: React.FC<WorkspaceManagementDialogProps> = ({
         confirmText="Leave Workspace"
         cancelText="Stay"
         variant="danger"
+      />
+
+      {/* Create Workspace Dialog */}
+      <CreateWorkspaceDialog
+        isOpen={isCreateDialogOpen}
+        onClose={() => setIsCreateDialogOpen(false)}
+        onSuccess={() => {
+          // Workspace list will be automatically refreshed by React Query
+        }}
       />
     </div>
   );

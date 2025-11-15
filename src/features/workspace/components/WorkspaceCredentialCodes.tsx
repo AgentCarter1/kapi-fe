@@ -1,21 +1,28 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Copy, Check } from 'lucide-react';
+import { Plus, Trash2, Copy, Check, Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useAppSelector } from '../../../store/hooks';
 import {
   getCredentialCodes,
   cancelCredentialCode,
   type CredentialCode,
+  type GetCredentialCodesParams,
 } from '../api/credentialCodeApi';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { CreateCredentialCodeDialog } from './CreateCredentialCodeDialog';
+import { useWorkspaceLicenseStatus } from '../api/workspaceLicenseApi';
 
 export const WorkspaceCredentialCodes = () => {
   const currentWorkspace = useAppSelector((state) => state.auth.currentWorkspace);
   const queryClient = useQueryClient();
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
+  const [filters, setFilters] = useState<GetCredentialCodesParams>({
+    page: 1,
+    limit: 10,
+  });
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean;
     credentialCodeId: string;
@@ -26,17 +33,33 @@ export const WorkspaceCredentialCodes = () => {
     code: '',
   });
 
-  const { data: credentialCodes, isLoading, error } = useQuery({
-    queryKey: ['credential-codes', currentWorkspace?.workspaceId],
-    queryFn: () => getCredentialCodes(currentWorkspace!.workspaceId),
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['credential-codes', currentWorkspace?.workspaceId, filters],
+    queryFn: () => getCredentialCodes(currentWorkspace!.workspaceId, filters),
     enabled: !!currentWorkspace?.workspaceId,
   });
+
+  const { data: licenseStatus, isLoading: isLoadingLicenseStatus } = useWorkspaceLicenseStatus(currentWorkspace?.workspaceId || null);
+
+  // Check if credential code limit is reached
+  // Button is disabled while loading or if limit is reached
+  const isCredentialCodeLimitReached = licenseStatus?.credentialCode.isLimitReached ?? false;
+  const isButtonDisabled = isLoadingLicenseStatus || isCredentialCodeLimitReached;
+  const credentialCodeLimitMessage = licenseStatus?.credentialCode && licenseStatus.credentialCode.max !== null && licenseStatus.credentialCode.max !== undefined
+    ? `Credential code limit reached (${licenseStatus.credentialCode.current}/${licenseStatus.credentialCode.max}). Please upgrade your license to create more codes.`
+    : isLoadingLicenseStatus
+    ? 'Loading license status...'
+    : '';
+
+  const credentialCodes = data?.items || [];
+  const meta = data?.meta;
 
   const cancelMutation = useMutation({
     mutationFn: (credentialCodeId: string) =>
       cancelCredentialCode(currentWorkspace!.workspaceId, credentialCodeId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['credential-codes'] });
+      queryClient.invalidateQueries({ queryKey: ['workspace-license', 'status', currentWorkspace?.workspaceId] });
       toast.success('Credential code cancelled successfully 🗑️');
       setDeleteConfirm({ isOpen: false, credentialCodeId: '', code: '' });
     },
@@ -68,6 +91,15 @@ export const WorkspaceCredentialCodes = () => {
   const handleConfirmCancel = async () => {
     if (!currentWorkspace?.workspaceId) return;
     await cancelMutation.mutateAsync(deleteConfirm.credentialCodeId);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFilters({ ...filters, search: searchInput || undefined, page: 1 });
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setFilters({ ...filters, page: newPage });
   };
 
   const getStatusBadge = (code: CredentialCode) => {
@@ -104,32 +136,62 @@ export const WorkspaceCredentialCodes = () => {
   return (
     <>
       {/* Header with Create Button */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">Credential Codes</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Generate 8-character codes for workspace access
           </p>
         </div>
-        <button
-          onClick={handleCreateClick}
-          className="inline-flex items-center justify-center px-4 py-2.5 bg-brand-500 text-white text-sm font-medium rounded-lg hover:bg-brand-600 transition-colors shadow-theme-xs dark:bg-brand-600 dark:hover:bg-brand-700"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Create Code
-        </button>
+        <div className="relative group">
+          <button
+            onClick={handleCreateClick}
+            disabled={isButtonDisabled}
+            className={`inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors shadow-theme-xs ${
+              isButtonDisabled
+                ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                : 'bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-700'
+            }`}
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Create Code
+          </button>
+          {isButtonDisabled && credentialCodeLimitMessage && (
+            <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 max-w-xs">
+              {credentialCodeLimitMessage}
+              <div className="absolute top-full right-4 -mt-1">
+                <div className="border-4 border-transparent border-t-gray-900 dark:border-t-gray-800"></div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Search Bar */}
+      <form onSubmit={handleSearchSubmit} className="mb-4 flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search by code, name, email, or phone..."
+            className="w-full h-11 rounded-lg border border-gray-200 bg-white pl-10 pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-800 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+          />
+        </div>
+        <button
+          type="submit"
+          className="px-4 py-2.5 bg-brand-500 text-white text-sm font-medium rounded-lg hover:bg-brand-600 transition-colors shadow-theme-xs dark:bg-brand-600 dark:hover:bg-brand-700"
+        >
+          Search
+        </button>
+      </form>
 
       {/* Loading State */}
       {isLoading && (
-        <div className="bg-white dark:bg-gray-900 shadow-theme-xs rounded-lg p-6 border border-gray-200 dark:border-gray-800">
-          <div className="animate-pulse space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center justify-between">
-                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
-                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-              </div>
-            ))}
+        <div className="bg-white dark:bg-gray-900 shadow-theme-xs rounded-lg p-12 border border-gray-200 dark:border-gray-800">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
           </div>
         </div>
       )}
@@ -172,13 +234,28 @@ export const WorkspaceCredentialCodes = () => {
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                 Create your first credential code to get started.
               </p>
-              <button
-                onClick={handleCreateClick}
-                className="inline-flex items-center justify-center px-4 py-2 bg-brand-500 text-white text-sm font-medium rounded-lg hover:bg-brand-600 transition-colors shadow-theme-xs dark:bg-brand-600 dark:hover:bg-brand-700"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Create Code
-              </button>
+              <div className="relative group inline-block">
+                <button
+                  onClick={handleCreateClick}
+                  disabled={isButtonDisabled}
+                  className={`inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-colors shadow-theme-xs ${
+                    isButtonDisabled
+                      ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                      : 'bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-700'
+                  }`}
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  Create Code
+                </button>
+                {isButtonDisabled && credentialCodeLimitMessage && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 max-w-xs">
+                    {credentialCodeLimitMessage}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                      <div className="border-4 border-transparent border-t-gray-900 dark:border-t-gray-800"></div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="bg-white dark:bg-gray-900 shadow-theme-xs rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800">
@@ -323,6 +400,36 @@ export const WorkspaceCredentialCodes = () => {
                   </tbody>
                 </table>
               </div>
+
+              {/* Pagination */}
+              {meta && meta.totalPages > 1 && (
+                <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Showing <span className="font-medium">{(meta.page - 1) * meta.limit + 1}</span> to{' '}
+                    <span className="font-medium">{Math.min(meta.page * meta.limit, meta.total)}</span> of{' '}
+                    <span className="font-medium">{meta.total}</span> codes
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handlePageChange(meta.page - 1)}
+                      disabled={!meta.hasPreviousPage}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Page {meta.page} of {meta.totalPages}
+                    </span>
+                    <button
+                      onClick={() => handlePageChange(meta.page + 1)}
+                      disabled={!meta.hasNextPage}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </>
@@ -335,7 +442,7 @@ export const WorkspaceCredentialCodes = () => {
           onClose={() => setIsCreateDialogOpen(false)}
           workspaceId={currentWorkspace.workspaceId}
           onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['credential-codes'] });
+            queryClient.invalidateQueries({ queryKey: ['credential-codes', currentWorkspace?.workspaceId] });
           }}
         />
       )}

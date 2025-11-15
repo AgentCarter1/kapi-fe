@@ -25,6 +25,7 @@ export const useCreateInvite = (workspaceId: string) => {
       // Invalidate workspace invitations and accounts queries
       queryClient.invalidateQueries({ queryKey: ['workspace-invitations', workspaceId] });
       queryClient.invalidateQueries({ queryKey: ['workspace-accounts', workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ['workspace-license', 'status', workspaceId] });
     },
   });
 };

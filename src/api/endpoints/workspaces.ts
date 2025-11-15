@@ -32,3 +32,55 @@ export const setDefaultWorkspace = async (workspaceId: string): Promise<void> =>
   await api.patch(`/account/workspaces/${workspaceId}/set-default`);
 };
 
+export type CreateWorkspaceRequest = {
+  name: string;
+  description?: string;
+};
+
+type CreateWorkspaceResponse = {
+  success: boolean;
+  customCode: number;
+  message: string;
+  data: Workspace & { message: string };
+};
+
+export const createWorkspace = async (data: CreateWorkspaceRequest): Promise<Workspace> => {
+  const response = await api.post<CreateWorkspaceResponse>('/account/workspaces', data);
+  return response.data.data;
+};
+
+export type LicenseLimitStatus = {
+  current: number;
+  max: number | null;
+  isLimitReached: boolean;
+  remaining: number | null;
+};
+
+export type LicenseFeatureStatus = {
+  enabled: boolean;
+};
+
+export type WorkspaceLicenseStatus = {
+  device: LicenseLimitStatus;
+  user: LicenseLimitStatus;
+  credentialCode: LicenseLimitStatus;
+  antiPassback: LicenseFeatureStatus;
+  loginWeb: LicenseFeatureStatus;
+};
+
+type WorkspaceLicenseStatusResponse = {
+  success: boolean;
+  customCode: number;
+  message: string;
+  data: WorkspaceLicenseStatus;
+};
+
+export const getWorkspaceLicenseStatus = async (workspaceId: string): Promise<WorkspaceLicenseStatus> => {
+  const response = await api.get<WorkspaceLicenseStatusResponse>('/workspace/license-status', {
+    headers: {
+      'workspace-id': workspaceId,
+    },
+  });
+  return response.data.data;
+};
+

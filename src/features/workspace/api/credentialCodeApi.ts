@@ -22,11 +22,23 @@ export type CredentialCode = {
   cancelledAt: string | null;
 };
 
-type CredentialCodesResponse = {
+type CredentialCodesMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+};
+
+type CredentialCodesListResponse = {
   success: boolean;
   customCode: number;
   message: string;
-  data: CredentialCode[];
+  data: {
+    items: CredentialCode[];
+    meta: CredentialCodesMeta;
+  };
 };
 
 type CreateCredentialCodeResponse = {
@@ -45,8 +57,23 @@ type CancelCredentialCodeResponse = {
   };
 };
 
-export const getCredentialCodes = async (workspaceId: string): Promise<CredentialCode[]> => {
-  const response = await api.get<CredentialCodesResponse>('/workspace/credential-codes', {
+export type GetCredentialCodesParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+};
+
+export type CredentialCodesList = {
+  items: CredentialCode[];
+  meta: CredentialCodesMeta;
+};
+
+export const getCredentialCodes = async (
+  workspaceId: string,
+  params?: GetCredentialCodesParams,
+): Promise<CredentialCodesList> => {
+  const response = await api.get<CredentialCodesListResponse>('/workspace/credential-codes', {
+    params,
     headers: {
       'workspace-id': workspaceId,
     },
