@@ -80,7 +80,7 @@ export const getDevices = async (
     if (filters.zoneId && filters.zoneId.trim()) cleanParams.zoneId = filters.zoneId;
   }
 
-  const response = await api.get<DevicesResponse>('/workspace/device', {
+  const response = await api.get<DevicesResponse>('/web/workspace/device', {
     params: cleanParams,
     headers: {
       'workspace-id': workspaceId,
@@ -98,7 +98,7 @@ export const createDevice = async (
   data: CreateDeviceRequest,
 ): Promise<Device> => {
   const response = await api.post<DeviceResponse>(
-    `/workspace/device`,
+    `/web/workspace/device`,
     data,
     {
       headers: {
@@ -118,7 +118,7 @@ export const updateDevice = async (
   data: UpdateDeviceRequest,
 ): Promise<{ message: string }> => {
   const response = await api.put<{ success: boolean; data: { message: string } }>(
-    `/workspace/device/${deviceId}`,
+    `/web/workspace/device/${deviceId}`,
     data,
     {
       headers: {
@@ -134,7 +134,7 @@ export const updateDevice = async (
  */
 export const deleteDevice = async (workspaceId: string, deviceId: string): Promise<{ message: string }> => {
   const response = await api.delete<{ success: boolean; data: { message: string } }>(
-    `/workspace/device/${deviceId}`,
+    `/web/workspace/device/${deviceId}`,
     {
       headers: {
         'workspace-id': workspaceId,

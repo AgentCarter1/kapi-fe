@@ -102,7 +102,7 @@ type MessageResponse = {
  * Get all zones in tree structure for workspace
  */
 export const getZones = async (workspaceId: string): Promise<Zone[]> => {
-  const response = await api.get<ZonesResponse>('/zones', {
+  const response = await api.get<ZonesResponse>('/web/zones', {
     headers: {
       'workspace-id': workspaceId,
     },
@@ -117,7 +117,7 @@ export const createZone = async (
   workspaceId: string,
   data: CreateZoneRequest,
 ): Promise<Zone> => {
-  const response = await api.post<ZoneResponse>('/zones', data, {
+  const response = await api.post<ZoneResponse>('/web/zones', data, {
     headers: {
       'workspace-id': workspaceId,
     },
@@ -133,7 +133,7 @@ export const updateZone = async (
   zoneId: string,
   data: UpdateZoneRequest,
 ): Promise<string> => {
-  const response = await api.put<MessageResponse>(`/zones/${zoneId}`, data, {
+  const response = await api.put<MessageResponse>(`/web/zones/${zoneId}`, data, {
     headers: {
       'workspace-id': workspaceId,
     },
@@ -145,7 +145,7 @@ export const updateZone = async (
  * Delete a zone
  */
 export const deleteZone = async (workspaceId: string, zoneId: string): Promise<string> => {
-  const response = await api.delete<MessageResponse>(`/zones/${zoneId}`, {
+  const response = await api.delete<MessageResponse>(`/web/zones/${zoneId}`, {
     headers: {
       'workspace-id': workspaceId,
     },
@@ -160,7 +160,7 @@ export const createZoneTemplate = async (
   workspaceId: string,
   data: CreateZoneTemplateRequest,
 ): Promise<Zone[]> => {
-  const response = await api.post<ZonesResponse>('/zones/template', data, {
+  const response = await api.post<ZonesResponse>('/web/zones/template', data, {
     headers: {
       'workspace-id': workspaceId,
     },

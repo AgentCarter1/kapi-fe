@@ -72,7 +72,7 @@ export const getCredentialCodes = async (
   workspaceId: string,
   params?: GetCredentialCodesParams,
 ): Promise<CredentialCodesList> => {
-  const response = await api.get<CredentialCodesListResponse>('/workspace/credential-codes', {
+  const response = await api.get<CredentialCodesListResponse>('/web/workspace/credential-codes', {
     params,
     headers: {
       'workspace-id': workspaceId,
@@ -97,7 +97,7 @@ export const createCredentialCode = async (
   },
 ): Promise<CredentialCode> => {
   const response = await api.post<CreateCredentialCodeResponse>(
-    '/workspace/credential-codes',
+    '/web/workspace/credential-codes',
     data || {},
     {
       headers: {
@@ -113,7 +113,7 @@ export const cancelCredentialCode = async (
   credentialCodeId: string,
 ): Promise<void> => {
   await api.patch<CancelCredentialCodeResponse>(
-    `/workspace/credential-codes/${credentialCodeId}/cancel`,
+    `/web/workspace/credential-codes/${credentialCodeId}/cancel`,
     {},
     {
       headers: {

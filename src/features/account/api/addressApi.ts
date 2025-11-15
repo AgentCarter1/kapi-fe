@@ -41,7 +41,7 @@ export interface UpdateAddressRequest {
  * Get all addresses for current user
  */
 export const getAddresses = async (): Promise<AddressResponse[]> => {
-  const response = await api.get<ApiResponse<AddressResponse[]>>('/account/addresses');
+  const response = await api.get<ApiResponse<AddressResponse[]>>('/web/account/addresses');
   return response.data.data!;
 };
 
@@ -49,7 +49,7 @@ export const getAddresses = async (): Promise<AddressResponse[]> => {
  * Create new address
  */
 export const createAddress = async (data: CreateAddressRequest): Promise<AddressResponse> => {
-  const response = await api.post<ApiResponse<AddressResponse>>('/account/addresses', data);
+  const response = await api.post<ApiResponse<AddressResponse>>('/web/account/addresses', data);
   return response.data.data!;
 };
 
@@ -57,13 +57,13 @@ export const createAddress = async (data: CreateAddressRequest): Promise<Address
  * Update address
  */
 export const updateAddress = async (id: string, data: UpdateAddressRequest): Promise<void> => {
-  await api.put(`/account/addresses/${id}`, data);
+  await api.put(`/web/account/addresses/${id}`, data);
 };
 
 /**
  * Delete address
  */
 export const deleteAddress = async (id: string): Promise<void> => {
-  await api.delete(`/account/addresses/${id}`);
+  await api.delete(`/web/account/addresses/${id}`);
 };
 

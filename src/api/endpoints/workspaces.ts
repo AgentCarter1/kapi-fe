@@ -17,7 +17,7 @@ type WorkspacesResponse = {
 };
 
 export const getWorkspaces = async (): Promise<Workspace[]> => {
-  const response = await api.get<WorkspacesResponse>('/account/workspaces');
+  const response = await api.get<WorkspacesResponse>('/web/account/workspaces');
   return response.data.data;
 };
 
@@ -25,11 +25,11 @@ export const getWorkspaces = async (): Promise<Workspace[]> => {
 export const getAccountWorkspaces = getWorkspaces;
 
 export const leaveWorkspace = async (workspaceId: string): Promise<void> => {
-  await api.patch(`/account/workspaces/${workspaceId}/leave`);
+  await api.patch(`/web/account/workspaces/${workspaceId}/leave`);
 };
 
 export const setDefaultWorkspace = async (workspaceId: string): Promise<void> => {
-  await api.patch(`/account/workspaces/${workspaceId}/set-default`);
+  await api.patch(`/web/account/workspaces/${workspaceId}/set-default`);
 };
 
 export type CreateWorkspaceRequest = {
@@ -45,7 +45,7 @@ type CreateWorkspaceResponse = {
 };
 
 export const createWorkspace = async (data: CreateWorkspaceRequest): Promise<Workspace> => {
-  const response = await api.post<CreateWorkspaceResponse>('/account/workspaces', data);
+  const response = await api.post<CreateWorkspaceResponse>('/web/account/workspaces', data);
   return response.data.data;
 };
 
@@ -76,7 +76,7 @@ type WorkspaceLicenseStatusResponse = {
 };
 
 export const getWorkspaceLicenseStatus = async (workspaceId: string): Promise<WorkspaceLicenseStatus> => {
-  const response = await api.get<WorkspaceLicenseStatusResponse>('/workspace/license-status', {
+  const response = await api.get<WorkspaceLicenseStatusResponse>('/web/workspace/license-status', {
     headers: {
       'workspace-id': workspaceId,
     },

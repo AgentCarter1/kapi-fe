@@ -10,7 +10,7 @@ import type { AccountSelfResponse, ApiResponse } from '../../../types';
  * Get current user's account information
  */
 export const getAccountSelf = async (): Promise<AccountSelfResponse> => {
-  const response = await api.get<ApiResponse<AccountSelfResponse>>('/account/self');
+  const response = await api.get<ApiResponse<AccountSelfResponse>>('/web/account/self');
   return response.data.data!;
 };
 

@@ -99,7 +99,7 @@ export type UpdateAntiPassbackPayload = {
 };
 
 export const getAntiPassbackTypes = async (): Promise<AntiPassbackTypeDefinition[]> => {
-  const response = await api.get<AntiPassbackTypeApiResponse>('/workspace/anti-passback/types');
+  const response = await api.get<AntiPassbackTypeApiResponse>('/web/workspace/anti-passback/types');
   return response.data.data;
 };
 
@@ -107,7 +107,7 @@ export const getAntiPassbackParameterDefinitions = async (
   typeId: string,
 ): Promise<AntiPassbackParameterDefinition[]> => {
   const response = await api.get<AntiPassbackParameterListApiResponse>(
-    `/workspace/anti-passback/types/${typeId}/parameters`,
+    `/web/workspace/anti-passback/types/${typeId}/parameters`,
   );
   return response.data.data;
 };
@@ -116,7 +116,7 @@ export const getAntiPassbacks = async (
   workspaceId: string,
   params?: { page?: number; limit?: number; isActive?: boolean },
 ): Promise<AntiPassbackListResponse> => {
-  const response = await api.get<AntiPassbackListApiResponse>('/workspace/anti-passback', {
+  const response = await api.get<AntiPassbackListApiResponse>('/web/workspace/anti-passback', {
     params,
     headers: {
       'workspace-id': workspaceId,
@@ -130,7 +130,7 @@ export const getAntiPassbackById = async (
   antiPassbackId: string,
 ): Promise<AntiPassback> => {
   const response = await api.get<AntiPassbackApiResponse>(
-    `/workspace/anti-passback/${antiPassbackId}`,
+    `/web/workspace/anti-passback/${antiPassbackId}`,
     {
       headers: {
         'workspace-id': workspaceId,
@@ -145,7 +145,7 @@ export const createAntiPassback = async (
   data: CreateAntiPassbackPayload,
 ): Promise<AntiPassback> => {
   const response = await api.post<AntiPassbackApiResponse>(
-    '/workspace/anti-passback',
+    '/web/workspace/anti-passback',
     data,
     {
       headers: {
@@ -162,7 +162,7 @@ export const updateAntiPassback = async (
   data: UpdateAntiPassbackPayload,
 ): Promise<AntiPassback> => {
   const response = await api.put<AntiPassbackApiResponse>(
-    `/workspace/anti-passback/${antiPassbackId}`,
+    `/web/workspace/anti-passback/${antiPassbackId}`,
     data,
     {
       headers: {
@@ -177,7 +177,7 @@ export const deleteAntiPassback = async (
   workspaceId: string,
   antiPassbackId: string,
 ): Promise<string> => {
-  const response = await api.delete<MessageResponse>(`/workspace/anti-passback/${antiPassbackId}`, {
+  const response = await api.delete<MessageResponse>(`/web/workspace/anti-passback/${antiPassbackId}`, {
     headers: {
       'workspace-id': workspaceId,
     },
@@ -198,7 +198,7 @@ type ZonesApiResponse = {
 
 export const getZonesByAntiPassback = async (antiPassbackId: string): Promise<Zone[]> => {
   const response = await api.get<ZonesApiResponse>(
-    `/workspace/anti-passback/${antiPassbackId}/zones`,
+    `/web/workspace/anti-passback/${antiPassbackId}/zones`,
   );
   return response.data.data;
 };
@@ -209,7 +209,7 @@ export const assignZonesToAntiPassback = async (
   zoneIds: string[],
 ): Promise<string> => {
   const response = await api.post<MessageResponse>(
-    `/workspace/anti-passback/${antiPassbackId}/zones`,
+    `/web/workspace/anti-passback/${antiPassbackId}/zones`,
     { zoneIds },
     {
       headers: {
@@ -226,7 +226,7 @@ export const removeZonesFromAntiPassback = async (
   zoneIds: string[],
 ): Promise<string> => {
   const response = await api.delete<MessageResponse>(
-    `/workspace/anti-passback/${antiPassbackId}/zones`,
+    `/web/workspace/anti-passback/${antiPassbackId}/zones`,
     {
       data: { zoneIds },
       headers: {

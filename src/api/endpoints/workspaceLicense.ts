@@ -49,7 +49,7 @@ type HistoryResponse = {
  * Get workspace license information
  */
 export const getWorkspaceLicense = async (workspaceId: string): Promise<WorkspaceLicense | null> => {
-  const response = await api.get<LicenseResponse>('/workspace/license', {
+  const response = await api.get<LicenseResponse>('/web/workspace/license', {
     headers: {
       'workspace-id': workspaceId,
     },
@@ -65,7 +65,7 @@ export const getWorkspaceAccessHistory = async (
   page: number = 1,
   limit: number = 20,
 ): Promise<AccessHistoryResponse> => {
-  const response = await api.get<HistoryResponse>('/workspace/access-history', {
+  const response = await api.get<HistoryResponse>('/web/workspace/access-history', {
     params: { page, limit },
     headers: {
       'workspace-id': workspaceId,

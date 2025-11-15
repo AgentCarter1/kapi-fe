@@ -115,7 +115,7 @@ api.interceptors.response.use(
           try {
             // Call refresh token endpoint
             const response = await api.post<ApiResponse<LoginResponse>>(
-              '/auth/refresh-token',
+              '/web/auth/refresh-token',
               {},
               {
                 headers: {

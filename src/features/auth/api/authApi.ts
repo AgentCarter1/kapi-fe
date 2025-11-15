@@ -18,7 +18,7 @@ import type {
  * Login user
  */
 export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
-  const response = await api.post<ApiResponse<LoginResponse>>('/auth/login', credentials);
+  const response = await api.post<ApiResponse<LoginResponse>>('/web/auth/login', credentials);
   return response.data.data!;
 };
 
@@ -26,7 +26,7 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
  * Sign up new user
  */
 export const signUp = async (data: SignUpRequest): Promise<SignUpResponse> => {
-  const response = await api.post<ApiResponse<SignUpResponse>>('/auth/sign-up', data);
+  const response = await api.post<ApiResponse<SignUpResponse>>('/web/auth/sign-up', data);
   return response.data.data!;
 };
 
@@ -38,7 +38,7 @@ export const verifyAccount = async (
   data: VerifyAccountRequest
 ): Promise<VerifyAccountResponse> => {
   const response = await api.post<ApiResponse<VerifyAccountResponse>>(
-    '/auth/account/verify',
+    '/web/auth/account/verify',
     data,
     {
       headers: {
@@ -53,7 +53,7 @@ export const verifyAccount = async (
  * Logout user - invalidates access and refresh tokens
  */
 export const logout = async (): Promise<void> => {
-  await api.post('/auth/logout');
+  await api.post('/web/auth/logout');
 };
 
 /**
@@ -61,7 +61,7 @@ export const logout = async (): Promise<void> => {
  */
 export const refreshToken = async (token: string): Promise<LoginResponse> => {
   const response = await api.post<ApiResponse<LoginResponse>>(
-    '/auth/refresh-token',
+    '/web/auth/refresh-token',
     {},
     {
       headers: {

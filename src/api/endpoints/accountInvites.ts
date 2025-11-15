@@ -37,7 +37,7 @@ export type GetAccountInvitesParams = {
 export const getAccountInvites = async (
   params?: GetAccountInvitesParams,
 ): Promise<AccountInvite[]> => {
-  const response = await api.get<AccountInvitesResponse>('/account/invites', {
+  const response = await api.get<AccountInvitesResponse>('/web/account/invites', {
     params,
   });
   return response.data.data;
@@ -71,7 +71,7 @@ export const getAccountInviteHistory = async (
   workspaceId: string,
 ): Promise<AccountInviteHistory[]> => {
   const response = await api.get<AccountInviteHistoryResponse>(
-    `/account/invites/history/${workspaceId}`,
+    `/web/account/invites/history/${workspaceId}`,
   );
   return response.data.data;
 };

@@ -42,7 +42,7 @@ export const getWorkspaceAccounts = async (
   workspaceId: string,
   filters?: WorkspaceAccountsFilters,
 ): Promise<{ items: WorkspaceAccount[]; meta: WorkspaceAccountsMeta }> => {
-  const response = await api.get<WorkspaceAccountsResponse>('/workspace/accounts', {
+  const response = await api.get<WorkspaceAccountsResponse>('/web/workspace/accounts', {
     params: filters,
     headers: {
       'workspace-id': workspaceId,
@@ -55,7 +55,7 @@ export const removeAccountFromWorkspace = async (
   workspaceId: string,
   accountId: string,
 ): Promise<void> => {
-  await api.delete(`/workspace/accounts/${accountId}`, {
+  await api.delete(`/web/workspace/accounts/${accountId}`, {
     headers: {
       'workspace-id': workspaceId,
     },
@@ -90,7 +90,7 @@ export const getAccountHistory = async (
   accountId: string,
 ): Promise<AccountHistory[]> => {
   const response = await api.get<AccountHistoryResponse>(
-    `/workspace/accounts/${accountId}/history`,
+    `/web/workspace/accounts/${accountId}/history`,
     {
       headers: {
         'workspace-id': workspaceId,

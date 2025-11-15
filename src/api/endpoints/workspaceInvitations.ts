@@ -65,7 +65,7 @@ export const createAccountInvite = async (
   data: CreateInviteRequest,
 ): Promise<CreateInviteResponse> => {
   const response = await api.post<CreateInviteApiResponse>(
-    '/workspace/invitations/account',
+    '/web/workspace/invitations/account',
     data,
     {
       headers: {
@@ -80,7 +80,7 @@ export const getWorkspaceInvites = async (
   workspaceId: string,
   params?: GetWorkspaceInvitesParams,
 ): Promise<WorkspaceInvite[]> => {
-  const response = await api.get<GetWorkspaceInvitesResponse>('/workspace/invitations', {
+  const response = await api.get<GetWorkspaceInvitesResponse>('/web/workspace/invitations', {
     params,
     headers: {
       'workspace-id': workspaceId,
@@ -94,7 +94,7 @@ export const cancelInvitation = async (
   invitationId: string,
 ): Promise<void> => {
   await api.patch(
-    `/workspace/invitations/${invitationId}/cancel`,
+    `/web/workspace/invitations/${invitationId}/cancel`,
     {},
     {
       headers: {
@@ -131,7 +131,7 @@ export const getInvitationHistory = async (
   email: string,
 ): Promise<InvitationHistory[]> => {
   const response = await api.get<GetInvitationHistoryResponse>(
-    `/workspace/invitations/history/${encodeURIComponent(email)}`,
+    `/web/workspace/invitations/history/${encodeURIComponent(email)}`,
     {
       headers: {
         'workspace-id': workspaceId,
