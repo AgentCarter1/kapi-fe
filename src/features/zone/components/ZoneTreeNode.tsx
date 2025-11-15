@@ -24,7 +24,7 @@ export const ZoneTreeNode = ({
   selectedZoneId,
   hideUnits = false 
 }: ZoneTreeNodeProps) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   
   const zoneTypeNumber = parseInt(zone.zoneTypeId) as number;
   const icon = ZONE_TYPE_ICONS[zoneTypeNumber] || '📍';
