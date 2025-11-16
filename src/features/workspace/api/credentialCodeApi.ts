@@ -108,6 +108,32 @@ export const createCredentialCode = async (
   return response.data.data;
 };
 
+type CreateBulkCredentialCodeResponse = {
+  success: boolean;
+  customCode: number;
+  message: string;
+  data: {
+    items: CredentialCode[];
+    totalCreated: number;
+  };
+};
+
+export const createBulkCredentialCode = async (
+  workspaceId: string,
+  data: { count: number },
+): Promise<{ items: CredentialCode[]; totalCreated: number }> => {
+  const response = await api.post<CreateBulkCredentialCodeResponse>(
+    '/web/workspace/credential-codes/bulk',
+    data,
+    {
+      headers: {
+        'workspace-id': workspaceId,
+      },
+    }
+  );
+  return response.data.data;
+};
+
 export const cancelCredentialCode = async (
   workspaceId: string,
   credentialCodeId: string,

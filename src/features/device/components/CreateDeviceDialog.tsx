@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
-import { X, ChevronDown } from 'lucide-react';
+import { X, ChevronDown, Cpu, AlertCircle } from 'lucide-react';
 import type { CreateDeviceRequest } from '../../../api/endpoints/devices';
 import { useZones, flattenZones, type FlatZone } from '../../zone/api/zoneApi';
 import { useAppSelector } from '../../../store/hooks';
+import { useWorkspaceLicenseStatus } from '../../workspace/api/workspaceLicenseApi';
 
 interface CreateDeviceDialogProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export const CreateDeviceDialog = ({
   // Fetch zones
   const { data: zonesTree = [], isLoading: isLoadingZones, error: zonesError } = useZones(currentWorkspace?.workspaceId || '');
   const flatZones: FlatZone[] = flattenZones(zonesTree);
+  const { data: licenseStatus, isLoading: isLoadingLicense } = useWorkspaceLicenseStatus(currentWorkspace?.workspaceId || null);
 
   // Calculate dropdown position when opened
   useEffect(() => {
@@ -104,6 +106,98 @@ export const CreateDeviceDialog = ({
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+            {/* License Info Banner */}
+            {licenseStatus?.device && (
+              <div className={`rounded-lg border p-4 ${
+                licenseStatus.device.isLimitReached
+                  ? 'bg-error-50 dark:bg-error-950 border-error-200 dark:border-error-800'
+                  : licenseStatus.device.remaining !== null && licenseStatus.device.remaining <= 3
+                  ? 'bg-warning-50 dark:bg-warning-950 border-warning-200 dark:border-warning-800'
+                  : 'bg-brand-50 dark:bg-brand-950 border-brand-200 dark:border-brand-800'
+              }`}>
+                <div className="flex items-start gap-3">
+                  <Cpu className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
+                    licenseStatus.device.isLimitReached
+                      ? 'text-error-600 dark:text-error-400'
+                      : licenseStatus.device.remaining !== null && licenseStatus.device.remaining <= 3
+                      ? 'text-warning-600 dark:text-warning-400'
+                      : 'text-brand-600 dark:text-brand-400'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90">
+                        Device License Limit
+                      </h3>
+                      {licenseStatus.device.max !== null ? (
+                        <span className={`text-xs font-medium px-2 py-1 rounded ${
+                          licenseStatus.device.isLimitReached
+                            ? 'bg-error-100 text-error-700 dark:bg-error-900 dark:text-error-300'
+                            : licenseStatus.device.remaining !== null && licenseStatus.device.remaining <= 3
+                            ? 'bg-warning-100 text-warning-700 dark:bg-warning-900 dark:text-warning-300'
+                            : 'bg-brand-100 text-brand-700 dark:bg-brand-900 dark:text-brand-300'
+                        }`}>
+                          {licenseStatus.device.current} / {licenseStatus.device.max}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Unlimited
+                        </span>
+                      )}
+                    </div>
+                    {licenseStatus.device.max !== null && (
+                      <>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+                          <div
+                            className={`h-2 rounded-full transition-all ${
+                              licenseStatus.device.isLimitReached
+                                ? 'bg-error-500 dark:bg-error-600'
+                                : licenseStatus.device.remaining !== null && licenseStatus.device.remaining <= 3
+                                ? 'bg-warning-500 dark:bg-warning-600'
+                                : 'bg-brand-500 dark:bg-brand-600'
+                            }`}
+                            style={{
+                              width: `${Math.min((licenseStatus.device.current / licenseStatus.device.max) * 100, 100)}%`,
+                            }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            {licenseStatus.device.remaining !== null ? (
+                              <>
+                                {licenseStatus.device.remaining === 0 ? (
+                                  <span className="text-error-600 dark:text-error-400 font-medium flex items-center gap-1">
+                                    <AlertCircle className="w-3 h-3" />
+                                    Limit reached
+                                  </span>
+                                ) : (
+                                  <>
+                                    <span className="font-medium text-gray-800 dark:text-white/90">
+                                      {licenseStatus.device.remaining}
+                                    </span>
+                                    {' '}slot{licenseStatus.device.remaining !== 1 ? 's' : ''} remaining
+                                  </>
+                                )}
+                              </>
+                            ) : (
+                              'No limit'
+                            )}
+                          </span>
+                          <span className="text-gray-500 dark:text-gray-500">
+                            {((licenseStatus.device.current / licenseStatus.device.max) * 100).toFixed(0)}% used
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    {licenseStatus.device.isLimitReached && (
+                      <p className="text-xs text-error-700 dark:text-error-400 mt-2">
+                        You have reached your device limit. Please upgrade your license to add more devices.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Device Info Section */}
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 pb-2 border-b border-gray-200 dark:border-gray-800">

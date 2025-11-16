@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Shield, Plus, Pencil, Trash2, Loader2, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Shield, Plus, Pencil, Trash2, Loader2, MapPin, ChevronLeft, ChevronRight, ArrowUp, Lock } from 'lucide-react';
 import { useAppSelector } from '../../../store/hooks';
+import { useNavigate } from 'react-router-dom';
 import {
   useAntiPassbackTypes,
   useAntiPassbacks,
@@ -23,6 +24,7 @@ import { useWorkspaceLicenseStatus } from '../../workspace/api/workspaceLicenseA
 const formatBoolean = (value: any) => (value ? 'Yes' : 'No');
 
 export const WorkspaceAntiPassbacks = () => {
+  const navigate = useNavigate();
   const currentWorkspace = useAppSelector((state) => state.auth.currentWorkspace);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingAntiPassback, setEditingAntiPassback] = useState<AntiPassback | null>(null);
@@ -156,6 +158,10 @@ export const WorkspaceAntiPassbacks = () => {
   const items = antiPassbacks?.items || [];
   const meta = antiPassbacks?.meta;
 
+  // Show license upgrade warning banner if feature is not enabled (but still show data)
+  // Note: We still show data even if license is loading, but disable all actions
+  const showUpgradeBanner = !isLoadingLicenseStatus && !isAntiPassbackEnabled;
+
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
   };
@@ -182,16 +188,39 @@ export const WorkspaceAntiPassbacks = () => {
 
   return (
     <div className="space-y-6">
+      {/* License Upgrade Banner */}
+      {showUpgradeBanner && (
+        <div className="bg-warning-50 dark:bg-warning-950 border border-warning-200 dark:border-warning-800 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <Lock className="w-5 h-5 text-warning-600 dark:text-warning-400 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-warning-800 dark:text-warning-300 mb-1">
+                Anti-passback Feature Not Available
+              </h3>
+              <p className="text-sm text-warning-700 dark:text-warning-400 mb-3">
+                The anti-passback feature is not enabled in your current license plan. You can view existing rules but cannot create, edit, or delete them. Please upgrade your license to manage anti-passback rules.
+              </p>
+              <button
+                onClick={() => navigate('/workspace/license')}
+                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-warning-600 hover:bg-warning-700 dark:bg-warning-600 dark:hover:bg-warning-700 rounded-lg transition-colors"
+              >
+                <ArrowUp className="w-4 h-4 mr-2" />
+                Upgrade License
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
             Anti-passback Rules
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Configure access restrictions for{' '}
-            <span className="font-medium text-gray-700 dark:text-gray-300">
-              {currentWorkspace.workspaceName}
-            </span>
+            {isAntiPassbackEnabled
+              ? `Configure access restrictions for ${currentWorkspace.workspaceName}`
+              : `View existing access restrictions for ${currentWorkspace.workspaceName}`}
           </p>
         </div>
         <div className="relative group">
@@ -307,15 +336,25 @@ export const WorkspaceAntiPassbacks = () => {
                         onClick={() =>
                           setAssignZonesDialog({ isOpen: true, antiPassback: antiPassback })
                         }
-                        className="p-2 text-sm text-brand-600 bg-brand-50 rounded-md hover:bg-brand-100 transition-colors dark:bg-brand-900/40 dark:text-brand-300 dark:hover:bg-brand-900/60"
-                        title="Assign Zones"
+                        disabled={isButtonDisabled}
+                        className={`p-2 text-sm rounded-md transition-colors ${
+                          isButtonDisabled
+                            ? 'text-gray-400 bg-gray-100 dark:bg-gray-800 cursor-not-allowed'
+                            : 'text-brand-600 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/40 dark:text-brand-300 dark:hover:bg-brand-900/60'
+                        }`}
+                        title={isButtonDisabled ? 'Feature not available - upgrade license' : 'Assign Zones'}
                       >
                         <MapPin className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => setEditingAntiPassback(antiPassback)}
-                        className="p-2 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
-                        title="Edit"
+                        disabled={isButtonDisabled}
+                        className={`p-2 text-sm rounded-md transition-colors ${
+                          isButtonDisabled
+                            ? 'text-gray-400 bg-gray-100 dark:bg-gray-800 cursor-not-allowed'
+                            : 'text-gray-600 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                        }`}
+                        title={isButtonDisabled ? 'Feature not available - upgrade license' : 'Edit'}
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
@@ -323,8 +362,13 @@ export const WorkspaceAntiPassbacks = () => {
                         onClick={() =>
                           setDeleteConfirm({ isOpen: true, antiPassback: antiPassback })
                         }
-                        className="p-2 text-sm text-error-600 bg-error-50 rounded-md hover:bg-error-100 transition-colors dark:bg-error-900/40 dark:text-error-300 dark:hover:bg-error-900/60"
-                        title="Delete"
+                        disabled={isButtonDisabled}
+                        className={`p-2 text-sm rounded-md transition-colors ${
+                          isButtonDisabled
+                            ? 'text-gray-400 bg-gray-100 dark:bg-gray-800 cursor-not-allowed'
+                            : 'text-error-600 bg-error-50 hover:bg-error-100 dark:bg-error-900/40 dark:text-error-300 dark:hover:bg-error-900/60'
+                        }`}
+                        title={isButtonDisabled ? 'Feature not available - upgrade license' : 'Delete'}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
