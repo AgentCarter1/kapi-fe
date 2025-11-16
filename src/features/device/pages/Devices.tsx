@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { CreateDeviceDialog } from '../components/CreateDeviceDialog';
 import { UpdateDeviceDialog } from '../components/UpdateDeviceDialog';
 import { DeviceList } from '../components/DeviceList';
+import { ActuatorSensorsList } from '../components/ActuatorSensorsList';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { useDevices, useCreateDevice, useUpdateDevice, useDeleteDevice } from '../api/deviceApi';
 import { useAppSelector } from '../../../store/hooks';
@@ -34,6 +35,9 @@ export const Devices = () => {
     page: 1,
     limit: 10,
   });
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'devices' | 'actuator-sensors'>('devices');
 
   // Queries & Mutations
   const { data, isLoading } = useDevices(currentWorkspace?.workspaceId || '', filters);
@@ -171,16 +175,48 @@ export const Devices = () => {
         </div>
       </div>
 
-      {/* Device List */}
-      <DeviceList
-        devices={data?.items || []}
-        meta={data?.meta || { page: 1, limit: 10, total: 0, totalPages: 0 }}
-        isLoading={isLoading}
-        filters={filters}
-        onFiltersChange={setFilters}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      {/* Tabs */}
+      <div className="mb-6">
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('devices')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'devices'
+                  ? 'border-brand-500 text-brand-600 dark:text-brand-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+            >
+              Devices
+            </button>
+            <button
+              onClick={() => setActiveTab('actuator-sensors')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'actuator-sensors'
+                  ? 'border-brand-500 text-brand-600 dark:text-brand-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+            >
+              Actuator Sensors
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'devices' && (
+        <DeviceList
+          devices={data?.items || []}
+          meta={data?.meta || { page: 1, limit: 10, total: 0, totalPages: 0 }}
+          isLoading={isLoading}
+          filters={filters}
+          onFiltersChange={setFilters}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      )}
+
+      {activeTab === 'actuator-sensors' && <ActuatorSensorsList />}
 
       {/* Create Device Dialog */}
       <CreateDeviceDialog
