@@ -5,6 +5,7 @@ import { AccountInvites } from './features/account/components/AccountInvites';
 import { LoginForm } from './features/auth/components/LoginForm';
 import { SignUpForm } from './features/auth/components/SignUpForm';
 import { VerifyAccountForm } from './features/auth/components/VerifyAccountForm';
+import { AuthGoogleCallback } from './features/auth/components/AuthGoogleCallback';
 import { WorkspaceAccountsPage } from './features/workspace/pages/WorkspaceAccountsPage';
 import { WorkspaceInvitationsPage } from './features/workspace/pages/WorkspaceInvitationsPage';
 import { WorkspaceCredentialCodesPage } from './features/workspace/pages/WorkspaceCredentialCodesPage';
@@ -92,6 +93,7 @@ function App() {
         <Route path="/auth/login" element={<LoginForm />} />
         <Route path="/auth/sign-up" element={<SignUpForm />} />
         <Route path="/auth/verify" element={<VerifyAccountForm />} />
+        <Route path="/auth/google/callback" element={<AuthGoogleCallback />} />
         
         {/* Protected Routes with Layout */}
         <Route
