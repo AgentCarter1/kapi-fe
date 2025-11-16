@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { UserPlus, Trash2, History } from 'lucide-react';
+import { Shield, Plus, Pencil, Trash2, Loader2, MapPin, ChevronDown, UserPlus, History } from 'lucide-react';
 import { getWorkspaceAccounts } from '../../../api/endpoints/workspaceAccounts';
 import type { WorkspaceAccountsFilters } from '../../../api/endpoints/workspaceAccounts';
 import { useAppSelector } from '../../../store/hooks';
@@ -453,84 +453,44 @@ export const WorkspaceAccounts = () => {
           )}
 
           {/* Pagination */}
-          {data.meta.totalPages > 1 && (
-            <div className="bg-white dark:bg-gray-900 px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-200 dark:border-gray-800 mt-4 rounded-lg shadow-theme-xs">
-              {/* Mobile Pagination */}
-              <div className="flex justify-between sm:hidden mb-4 sm:mb-0">
+          {data.meta && (
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Showing <span className="font-medium">{(data.meta.page - 1) * data.meta.limit + 1}</span> to{' '}
+                <span className="font-medium">{Math.min(data.meta.page * data.meta.limit, data.meta.total)}</span> of{' '}
+                <span className="font-medium">{data.meta.total}</span> results
+              </div>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => handlePageChange(data.meta.page - 1)}
                   disabled={!data.meta.hasPreviousPage}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-700 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Previous
+                  ←
                 </button>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Page {data.meta.page} of {data.meta.totalPages}
+                </span>
                 <button
                   onClick={() => handlePageChange(data.meta.page + 1)}
                   disabled={!data.meta.hasNextPage}
-                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-700 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Next
+                  →
                 </button>
-              </div>
-
-              {/* Desktop Pagination */}
-              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Showing{' '}
-                    <span className="font-semibold">
-                      {(data.meta.page - 1) * data.meta.limit + 1}
-                    </span>{' '}
-                    to{' '}
-                    <span className="font-semibold">
-                      {Math.min(data.meta.page * data.meta.limit, data.meta.total)}
-                    </span>{' '}
-                    of <span className="font-semibold">{data.meta.total}</span> results
-                  </p>
-                </div>
-                <div>
-                  <nav className="relative z-0 inline-flex rounded-lg shadow-sm gap-1">
-                    <button
-                      onClick={() => handlePageChange(data.meta.page - 1)}
-                      disabled={!data.meta.hasPreviousPage}
-                      className="relative inline-flex items-center px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      ←
-                    </button>
-                    {[...Array(Math.min(data.meta.totalPages, 5))].map((_, i) => {
-                      let pageNum;
-                      if (data.meta.totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (data.meta.page <= 3) {
-                        pageNum = i + 1;
-                      } else if (data.meta.page >= data.meta.totalPages - 2) {
-                        pageNum = data.meta.totalPages - 4 + i;
-                      } else {
-                        pageNum = data.meta.page - 2 + i;
-                      }
-                      
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-lg transition-colors ${
-                            data.meta.page === pageNum
-                              ? 'z-10 bg-brand-50 dark:bg-brand-950 border-brand-500 dark:border-brand-700 text-brand-600 dark:text-brand-400'
-                              : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-                    <button
-                      onClick={() => handlePageChange(data.meta.page + 1)}
-                      disabled={!data.meta.hasNextPage}
-                      className="relative inline-flex items-center px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      →
-                    </button>
-                  </nav>
+                {/* Page Size Selector */}
+                <div className="relative ml-3">
+                  <select
+                    aria-label="Items per page"
+                    value={filters.limit}
+                    onChange={(e) => setFilters((prev) => ({ ...prev, page: 1, limit: Number(e.target.value) }))}
+                    className="h-8 appearance-none pr-8 pl-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400"
+                  >
+                    {[1,3,5,10,20,50,100].map((opt) => (
+                      <option key={opt} value={opt}>{opt} / page</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 </div>
               </div>
             </div>

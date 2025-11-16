@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Loader2, Edit, Activity, Filter, X as XIcon } from 'lucide-react';
+import { Loader2, Edit, Activity, Filter, X as XIcon, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { useActuatorSensorsByWorkspace, useUpdateActuatorSensor } from '../api/actuatorSensorApi';
 import { useZones, flattenZones, type FlatZone } from '../../zone/api/zoneApi';
 import { useDevices } from '../api/deviceApi';
@@ -13,61 +13,27 @@ export const ActuatorSensorsList = () => {
   const [updateDialog, setUpdateDialog] = useState(false);
   const [selectedActuatorSensor, setSelectedActuatorSensor] = useState<ActuatorSensor | null>(null);
   const [filters, setFilters] = useState<GetActuatorSensorsFilters>({});
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   // Fetch zones for filter dropdown
   const { data: zonesTree = [] } = useZones(currentWorkspace?.workspaceId || '');
   const flatZones: FlatZone[] = flattenZones(zonesTree);
 
-  // Fetch devices for filter dropdown
-  const { data: devicesData } = useDevices(currentWorkspace?.workspaceId || '', { page: 1, limit: 1000 });
+  // Fetch devices for filter dropdown (limited)
+  const { data: devicesData } = useDevices(currentWorkspace?.workspaceId || '', { page: 1, limit: 10 });
 
-  // Fetch actuator sensors with filters
-  const { data: allActuatorSensors, isLoading: isLoadingAll } = useActuatorSensorsByWorkspace(
+  // Fetch actuator sensors with filters and pagination
+  const { data: list, isLoading: isLoadingAll } = useActuatorSensorsByWorkspace(
     currentWorkspace?.workspaceId || null,
+    filters,
+    page,
+    limit,
   );
 
-  // Get unique devices and types from all actuator sensors
-  const uniqueDevices = useMemo(() => {
-    if (!allActuatorSensors) return [];
-    const deviceMap = new Map<string, { id: string; name: string; uuid?: number }>();
-    allActuatorSensors.forEach((sensor) => {
-      if (sensor.deviceId && sensor.deviceName) {
-        deviceMap.set(sensor.deviceId, {
-          id: sensor.deviceId,
-          name: sensor.deviceName,
-          uuid: sensor.deviceUuid,
-        });
-      }
-    });
-    return Array.from(deviceMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [allActuatorSensors]);
-
-  const uniqueTypes = useMemo(() => {
-    if (!allActuatorSensors) return [];
-    const typeMap = new Map<string, { id: string; name: string }>();
-    allActuatorSensors.forEach((sensor) => {
-      if (sensor.actuatorSensorTypeId && sensor.actuatorSensorTypeName) {
-        typeMap.set(sensor.actuatorSensorTypeId, {
-          id: sensor.actuatorSensorTypeId,
-          name: sensor.actuatorSensorTypeName,
-        });
-      }
-    });
-    return Array.from(typeMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [allActuatorSensors]);
-
-  // Apply filters to actuator sensors
-  const actuatorSensors = useMemo(() => {
-    if (!allActuatorSensors) return [];
-    return allActuatorSensors.filter((sensor) => {
-      if (filters.zoneId && sensor.zoneId !== filters.zoneId) return false;
-      if (filters.deviceId && sensor.deviceId !== filters.deviceId) return false;
-      if (filters.actuatorSensorTypeId && sensor.actuatorSensorTypeId !== filters.actuatorSensorTypeId) return false;
-      if (filters.isActive !== undefined && sensor.isActive !== filters.isActive) return false;
-      return true;
-    });
-  }, [allActuatorSensors, filters]);
+  const actuatorSensors = list?.items || [];
+  const meta = list?.meta;
 
   const isLoading = isLoadingAll;
   const updateMutation = useUpdateActuatorSensor(
@@ -99,15 +65,6 @@ export const ActuatorSensorsList = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-        <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading actuator sensors...</span>
-      </div>
-    );
-  }
-
   const hasActiveFilters = Object.keys(filters).some((key) => {
     const value = filters[key as keyof GetActuatorSensorsFilters];
     return value !== undefined && value !== null && value !== '';
@@ -115,6 +72,7 @@ export const ActuatorSensorsList = () => {
 
   const clearFilters = () => {
     setFilters({});
+    setPage(1);
   };
 
   if (isLoading) {
@@ -122,18 +80,6 @@ export const ActuatorSensorsList = () => {
       <div className="flex items-center justify-center py-12">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
         <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Loading actuator sensors...</span>
-      </div>
-    );
-  }
-
-  if (!allActuatorSensors || allActuatorSensors.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Activity className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
-        <h3 className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">No Actuator Sensors</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-500">
-          This workspace does not have any actuator sensors yet.
-        </p>
       </div>
     );
   }
@@ -179,7 +125,7 @@ export const ActuatorSensorsList = () => {
                 </label>
                 <select
                   value={filters.zoneId || ''}
-                  onChange={(e) => setFilters({ ...filters, zoneId: e.target.value || undefined })}
+                  onChange={(e) => { setFilters({ ...filters, zoneId: e.target.value || undefined }); setPage(1); }}
                   className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-800 dark:text-white/90 dark:focus:border-brand-800"
                 >
                   <option value="">All Zones</option>
@@ -200,11 +146,11 @@ export const ActuatorSensorsList = () => {
                 </label>
                 <select
                   value={filters.deviceId || ''}
-                  onChange={(e) => setFilters({ ...filters, deviceId: e.target.value || undefined })}
+                  onChange={(e) => { setFilters({ ...filters, deviceId: e.target.value || undefined }); setPage(1); }}
                   className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-800 dark:text-white/90 dark:focus:border-brand-800"
                 >
                   <option value="">All Devices</option>
-                  {uniqueDevices.map((device) => (
+                  {(devicesData?.items || []).map((device) => (
                     <option key={device.id} value={device.id}>
                       {device.name} {device.uuid && `(${device.uuid})`}
                     </option>
@@ -219,16 +165,15 @@ export const ActuatorSensorsList = () => {
                 </label>
                 <select
                   value={filters.actuatorSensorTypeId || ''}
-                  onChange={(e) =>
-                    setFilters({ ...filters, actuatorSensorTypeId: e.target.value || undefined })
-                  }
+                  onChange={(e) => { setFilters({ ...filters, actuatorSensorTypeId: e.target.value || undefined }); setPage(1); }}
                   className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-800 dark:text-white/90 dark:focus:border-brand-800"
                 >
                   <option value="">All Types</option>
-                  {uniqueTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
+                  {/* types derived from list can be reconstructed when needed */}
+                  {Array.from(
+                    new Map((list?.items || []).filter(s => s.actuatorSensorTypeId && s.actuatorSensorTypeName).map(s => [s.actuatorSensorTypeId!, s.actuatorSensorTypeName!])).entries()
+                  ).map(([id, name]) => (
+                    <option key={id} value={id}>{name}</option>
                   ))}
                 </select>
               </div>
@@ -239,19 +184,12 @@ export const ActuatorSensorsList = () => {
                   Status
                 </label>
                 <select
-                  value={
-                    filters.isActive === undefined
-                      ? ''
-                      : filters.isActive
-                      ? 'true'
-                      : 'false'
-                  }
-                  onChange={(e) =>
-                    setFilters({
-                      ...filters,
-                      isActive: e.target.value === '' ? undefined : e.target.value === 'true',
-                    })
-                  }
+                  value={filters.isActive === undefined ? '' : (filters.isActive ? 'true' : 'false')}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setFilters({ ...filters, isActive: v === '' ? undefined : v === 'true' });
+                    setPage(1);
+                  }}
                   className="w-full h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-800 dark:text-white/90 dark:focus:border-brand-800"
                 >
                   <option value="">All Status</option>
@@ -263,12 +201,50 @@ export const ActuatorSensorsList = () => {
           )}
         </div>
 
-        {/* Results Count */}
-        {hasActiveFilters && (
+        {/* Results & Pagination */}
+        <div className="flex items-center justify-between">
           <div className="text-sm text-gray-600 dark:text-gray-400">
-            Showing {actuatorSensors.length} of {allActuatorSensors.length} actuator sensors
+            {meta ? (
+              <>Showing <span className="font-medium">{(meta.page - 1) * meta.limit + 1}</span> to{' '}
+              <span className="font-medium">{Math.min(meta.page * meta.limit, meta.total)}</span> of{' '}
+              <span className="font-medium">{meta.total}</span> actuator sensors</>
+            ) : (
+              <>Showing {actuatorSensors.length} actuator sensors</>
+            )}
           </div>
-        )}
+          {meta && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={!meta.hasPreviousPage}
+                className="inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Page {meta.page} of {meta.totalPages}</span>
+              <button
+                onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
+                disabled={!meta.hasNextPage}
+                className="inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              <div className="relative ml-2">
+                <select
+                  aria-label="Items per page"
+                  value={limit}
+                  onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+                  className="h-8 appearance-none pr-8 pl-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400"
+                >
+                  {[1,3,5,10,20,50,100].map((opt) => (
+                    <option key={opt} value={opt}>{opt} / page</option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Actuator Sensors List */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-theme-xs overflow-hidden">
@@ -285,56 +261,56 @@ export const ActuatorSensorsList = () => {
           ) : (
             <div className="divide-y divide-gray-200 dark:divide-gray-700">
               {actuatorSensors.map((sensor) => (
-              <div
-                key={sensor.id}
-                className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Activity className="w-4 h-4 text-brand-600 dark:text-brand-400 flex-shrink-0" />
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                        {sensor.name}
-                      </h3>
-                      {!sensor.isActive && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
-                          Inactive
-                        </span>
-                      )}
+                <div
+                  key={sensor.id}
+                  className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Activity className="w-4 h-4 text-brand-600 dark:text-brand-400 flex-shrink-0" />
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                          {sensor.name}
+                        </h3>
+                        {!sensor.isActive && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+                            Inactive
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-2 space-y-1 text-xs text-gray-500 dark:text-gray-400">
+                        {sensor.actuatorSensorTypeName && (
+                          <div className="flex items-center gap-1">
+                            <span className="font-medium">Type:</span>
+                            <span>{sensor.actuatorSensorTypeName}</span>
+                          </div>
+                        )}
+                        {sensor.zoneName && (
+                          <div className="flex items-center gap-1">
+                            <span className="font-medium">Zone:</span>
+                            <span>{sensor.zoneName}</span>
+                          </div>
+                        )}
+                        {sensor.deviceName && (
+                          <div className="flex items-center gap-1">
+                            <span className="font-medium">Device:</span>
+                            <span>{sensor.deviceName}</span>
+                            {sensor.deviceUuid && (
+                              <span className="text-gray-400 dark:text-gray-500 ml-1">({sensor.deviceUuid})</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="mt-2 space-y-1 text-xs text-gray-500 dark:text-gray-400">
-                      {sensor.actuatorSensorTypeName && (
-                        <div className="flex items-center gap-1">
-                          <span className="font-medium">Type:</span>
-                          <span>{sensor.actuatorSensorTypeName}</span>
-                        </div>
-                      )}
-                      {sensor.zoneName && (
-                        <div className="flex items-center gap-1">
-                          <span className="font-medium">Zone:</span>
-                          <span>{sensor.zoneName}</span>
-                        </div>
-                      )}
-                      {sensor.deviceName && (
-                        <div className="flex items-center gap-1">
-                          <span className="font-medium">Device:</span>
-                          <span>{sensor.deviceName}</span>
-                          {sensor.deviceUuid && (
-                            <span className="text-gray-400 dark:text-gray-500 ml-1">({sensor.deviceUuid})</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      onClick={() => handleEdit(sensor)}
+                      className="ml-4 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 text-blue-600 dark:text-blue-400 transition-colors"
+                      title="Edit actuator sensor"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleEdit(sensor)}
-                    className="ml-4 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950 text-blue-600 dark:text-blue-400 transition-colors"
-                    title="Edit actuator sensor"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
                 </div>
-              </div>
               ))}
             </div>
           )}

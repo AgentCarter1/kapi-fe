@@ -1,4 +1,4 @@
-import { api } from '../apiClient';
+import { api } from "../apiClient";
 
 export type ActuatorSensor = {
   id: string;
@@ -28,41 +28,65 @@ export interface GetActuatorSensorsFilters {
   isActive?: boolean;
 }
 
+export type ActuatorSensorsMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+};
+
+export type ActuatorSensorsList = {
+  items: ActuatorSensor[];
+  meta: ActuatorSensorsMeta;
+};
+
 /**
- * Get all actuator sensors for a workspace
+ * Get all actuator sensors for a workspace (paginated)
  */
 export const getActuatorSensorsByWorkspace = async (
   workspaceId: string,
   filters?: GetActuatorSensorsFilters,
-): Promise<ActuatorSensor[]> => {
+  page: number = 1,
+  limit: number = 10
+): Promise<ActuatorSensorsList> => {
   // Filter out empty values
-  const cleanParams: Record<string, any> = {};
+  const params: Record<string, any> = { page, limit };
   if (filters) {
-    if (filters.zoneId && filters.zoneId.trim()) cleanParams.zoneId = filters.zoneId;
-    if (filters.deviceId && filters.deviceId.trim()) cleanParams.deviceId = filters.deviceId;
+    if (filters.zoneId && filters.zoneId.trim()) params.zoneId = filters.zoneId;
+    if (filters.deviceId && filters.deviceId.trim())
+      params.deviceId = filters.deviceId;
     if (filters.actuatorSensorTypeId && filters.actuatorSensorTypeId.trim())
-      cleanParams.actuatorSensorTypeId = filters.actuatorSensorTypeId;
-    if (filters.isActive !== undefined) cleanParams.isActive = filters.isActive.toString();
+      params.actuatorSensorTypeId = filters.actuatorSensorTypeId;
+    if (filters.isActive !== undefined)
+      params.isActive = filters.isActive.toString();
   }
 
-  const response = await api.get(`/web/workspace/actuator-sensors`, {
-    params: cleanParams,
+  const response = await api.get("/web/workspace/actuator-sensors", {
+    params,
     headers: {
-      'workspace-id': workspaceId,
+      "workspace-id": workspaceId,
     },
   });
-  return response.data.data as ActuatorSensor[];
+  return response.data.data as ActuatorSensorsList;
 };
 
 /**
  * Get actuator sensors for a device (legacy endpoint)
  */
-export const getActuatorSensors = async (workspaceId: string, deviceId: string): Promise<ActuatorSensor[]> => {
-  const response = await api.get(`/web/workspace/device/${deviceId}/actuator-sensors`, {
-    headers: {
-      'workspace-id': workspaceId,
-    },
-  });
+export const getActuatorSensors = async (
+  workspaceId: string,
+  deviceId: string
+): Promise<ActuatorSensor[]> => {
+  const response = await api.get(
+    `/web/workspace/device/${deviceId}/actuator-sensors`,
+    {
+      headers: {
+        "workspace-id": workspaceId,
+      },
+    }
+  );
   return response.data.data as ActuatorSensor[];
 };
 
@@ -72,12 +96,11 @@ export const getActuatorSensors = async (workspaceId: string, deviceId: string):
 export const updateActuatorSensor = async (
   workspaceId: string,
   actuatorSensorId: string,
-  data: UpdateActuatorSensorRequest,
+  data: UpdateActuatorSensorRequest
 ): Promise<void> => {
   await api.put(`/web/workspace/actuator-sensors/${actuatorSensorId}`, data, {
     headers: {
-      'workspace-id': workspaceId,
+      "workspace-id": workspaceId,
     },
   });
 };
-

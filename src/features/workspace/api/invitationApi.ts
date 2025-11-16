@@ -9,6 +9,7 @@ import type {
   CreateInviteRequest, 
   CreateInviteResponse,
   WorkspaceInvite,
+  WorkspaceInvitesListResponse,
   GetWorkspaceInvitesParams,
   InvitationHistory,
 } from '../../../api/endpoints/workspaceInvitations';
@@ -34,7 +35,7 @@ export const useCreateInvite = (workspaceId: string) => {
  * React Query hook for fetching workspace invitations
  */
 export const useWorkspaceInvites = (workspaceId: string, params?: GetWorkspaceInvitesParams) => {
-  return useQuery<WorkspaceInvite[], Error>({
+  return useQuery<WorkspaceInvitesListResponse, Error>({
     queryKey: ['workspace-invitations', workspaceId, params],
     queryFn: () => getWorkspaceInvites(workspaceId, params),
     enabled: !!workspaceId,

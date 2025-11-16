@@ -4,26 +4,29 @@ import {
   updateActuatorSensor,
   type UpdateActuatorSensorRequest,
   type GetActuatorSensorsFilters,
+  type ActuatorSensorsList,
 } from '../../../api/endpoints/actuatorSensors';
 
 // Query Keys
 export const actuatorSensorKeys = {
   all: ['actuator-sensors'] as const,
   workspace: (workspaceId: string) => [...actuatorSensorKeys.all, 'workspace', workspaceId] as const,
-  list: (workspaceId: string, filters?: GetActuatorSensorsFilters) =>
-    [...actuatorSensorKeys.workspace(workspaceId), 'list', filters] as const,
+  list: (workspaceId: string, filters?: GetActuatorSensorsFilters, page: number = 1, limit: number = 10) =>
+    [...actuatorSensorKeys.workspace(workspaceId), 'list', filters, page, limit] as const,
 };
 
 /**
- * Get all actuator sensors for a workspace query
+ * Get all actuator sensors for a workspace query (paginated)
  */
 export const useActuatorSensorsByWorkspace = (
   workspaceId: string | null,
   filters?: GetActuatorSensorsFilters,
+  page: number = 1,
+  limit: number = 10,
 ) => {
-  return useQuery({
-    queryKey: actuatorSensorKeys.list(workspaceId || '', filters),
-    queryFn: () => getActuatorSensorsByWorkspace(workspaceId!, filters),
+  return useQuery<ActuatorSensorsList>({
+    queryKey: actuatorSensorKeys.list(workspaceId || '', filters, page, limit),
+    queryFn: () => getActuatorSensorsByWorkspace(workspaceId!, filters, page, limit),
     enabled: !!workspaceId,
   });
 };

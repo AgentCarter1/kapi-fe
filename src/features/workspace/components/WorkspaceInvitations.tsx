@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, Calendar, Clock, CheckCircle, XCircle, Ban, HourglassIcon, X as XIcon, History } from 'lucide-react';
+import { Mail, Calendar, Clock, CheckCircle, XCircle, Ban, HourglassIcon, X as XIcon, History, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useWorkspaceInvites, useCancelInvitation } from '../api/invitationApi';
 import { useAppSelector } from '../../../store/hooks';
@@ -9,6 +9,8 @@ import InvitationHistoryDialog from './InvitationHistoryDialog';
 export const WorkspaceInvitations = () => {
   const currentWorkspace = useAppSelector((state) => state.auth.currentWorkspace);
   const [selectedStatus, setSelectedStatus] = useState<string | undefined>(undefined);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [historyDialog, setHistoryDialog] = useState<{
     isOpen: boolean;
@@ -27,10 +29,17 @@ export const WorkspaceInvitations = () => {
     email: '',
   });
 
-  const { data: invites, isLoading, error } = useWorkspaceInvites(
+  const { data: invitesData, isLoading, error } = useWorkspaceInvites(
     currentWorkspace?.workspaceId || '',
-    { status: selectedStatus },
+    { status: selectedStatus, page, limit },
   );
+
+  const invites = invitesData?.items || [];
+  const meta = invitesData?.meta;
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
 
   const cancelMutation = useCancelInvitation(currentWorkspace?.workspaceId || '');
 
@@ -192,7 +201,7 @@ export const WorkspaceInvitations = () => {
       )}
 
       {/* Invitations Table */}
-      {!isLoading && !error && invites && (
+      {!isLoading && !error && invitesData && (
         <>
           {invites.length === 0 ? (
             <div className="bg-white dark:bg-gray-900 shadow-theme-xs rounded-lg p-12 text-center border border-gray-200 dark:border-gray-800">
@@ -317,6 +326,54 @@ export const WorkspaceInvitations = () => {
                   </tbody>
                 </table>
               </div>
+
+              {/* Pagination */}
+              {meta && (
+                <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Showing <span className="font-medium">{(meta.page - 1) * meta.limit + 1}</span> to{' '}
+                    <span className="font-medium">{Math.min(meta.page * meta.limit, meta.total)}</span> of{' '}
+                    <span className="font-medium">{meta.total}</span> invitations
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handlePageChange(meta.page - 1)}
+                      disabled={!meta.hasPreviousPage}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Page {meta.page} of {meta.totalPages}
+                    </span>
+                    <button
+                      onClick={() => handlePageChange(meta.page + 1)}
+                      disabled={!meta.hasNextPage}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                    {/* Page Size Selector */}
+                    <div className="relative ml-3">
+                      <select
+                        aria-label="Items per page"
+                        value={limit}
+                        onChange={(e) => {
+                          const newLimit = Number(e.target.value);
+                          setLimit(newLimit);
+                          setPage(1);
+                        }}
+                        className="h-8 appearance-none pr-8 pl-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400"
+                      >
+                        {[1,3,5,10,20,50,100].map((opt) => (
+                          <option key={opt} value={opt}>{opt} / page</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </>

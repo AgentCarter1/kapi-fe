@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Shield, Plus, Pencil, Trash2, Loader2, MapPin } from 'lucide-react';
+import { Shield, Plus, Pencil, Trash2, Loader2, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppSelector } from '../../../store/hooks';
 import {
   useAntiPassbackTypes,
@@ -40,6 +40,8 @@ export const WorkspaceAntiPassbacks = () => {
     isOpen: false,
     antiPassback: null,
   });
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
 
   const {
     data: antiPassbackTypes,
@@ -51,7 +53,7 @@ export const WorkspaceAntiPassbacks = () => {
     data: antiPassbacks,
     isLoading: isLoadingAntiPassbacks,
     error: antiPassbacksError,
-  } = useAntiPassbacks(currentWorkspace?.workspaceId || '');
+  } = useAntiPassbacks(currentWorkspace?.workspaceId || '', { page, limit });
 
   const createMutation = useCreateAntiPassback(currentWorkspace?.workspaceId || '');
   const updateMutation = useUpdateAntiPassback(currentWorkspace?.workspaceId || '');
@@ -152,6 +154,11 @@ export const WorkspaceAntiPassbacks = () => {
 
   const types = antiPassbackTypes || [];
   const items = antiPassbacks?.items || [];
+  const meta = antiPassbacks?.meta;
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
 
   const renderParameterSummary = (antiPassback: AntiPassback) => {
     const entries = Object.entries(antiPassback.parameters || {});
@@ -327,6 +334,36 @@ export const WorkspaceAntiPassbacks = () => {
               ))}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          {meta && meta.totalPages > 0 && (
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Showing <span className="font-medium">{(meta.page - 1) * meta.limit + 1}</span> to{' '}
+                <span className="font-medium">{Math.min(meta.page * meta.limit, meta.total)}</span> of{' '}
+                <span className="font-medium">{meta.total}</span> anti-passback rules
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(meta.page - 1)}
+                  disabled={meta.page === 1}
+                  className="inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Page {meta.page} of {meta.totalPages}
+                </span>
+                <button
+                  onClick={() => handlePageChange(meta.page + 1)}
+                  disabled={meta.page === meta.totalPages}
+                  className="inline-flex items-center justify-center w-8 h-8 rounded border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

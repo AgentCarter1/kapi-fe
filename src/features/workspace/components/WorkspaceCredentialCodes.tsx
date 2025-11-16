@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Copy, Check, Search, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Copy, Check, Search, ChevronLeft, ChevronRight, Loader2, ChevronDown } from 'lucide-react';
 import { useAppSelector } from '../../../store/hooks';
 import {
   getCredentialCodes,
@@ -402,9 +402,9 @@ export const WorkspaceCredentialCodes = () => {
               </div>
 
               {/* Pagination */}
-              {meta && meta.totalPages > 1 && (
+              {meta && (
                 <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
                     Showing <span className="font-medium">{(meta.page - 1) * meta.limit + 1}</span> to{' '}
                     <span className="font-medium">{Math.min(meta.page * meta.limit, meta.total)}</span> of{' '}
                     <span className="font-medium">{meta.total}</span> codes
@@ -427,6 +427,23 @@ export const WorkspaceCredentialCodes = () => {
                     >
                       <ChevronRight className="w-4 h-4" />
                     </button>
+                    {/* Page Size Selector */}
+                    <div className="relative ml-3">
+                      <select
+                        aria-label="Items per page"
+                        value={filters.limit}
+                        onChange={(e) => {
+                          const newLimit = Number(e.target.value);
+                          setFilters({ ...filters, page: 1, limit: newLimit });
+                        }}
+                        className="h-8 appearance-none pr-8 pl-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400"
+                      >
+                        {[1,3,5,10,20,50,100].map((opt) => (
+                          <option key={opt} value={opt}>{opt} / page</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    </div>
                   </div>
                 </div>
               )}

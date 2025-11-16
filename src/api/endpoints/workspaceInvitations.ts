@@ -49,15 +49,31 @@ export interface WorkspaceInvite {
   acceptedAt: string | null;
 }
 
-type GetWorkspaceInvitesResponse = {
+export type WorkspaceInvitesMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+};
+
+export type WorkspaceInvitesListResponse = {
+  items: WorkspaceInvite[];
+  meta: WorkspaceInvitesMeta;
+};
+
+type GetWorkspaceInvitesApiResponse = {
   success: boolean;
   customCode: number;
   message: string;
-  data: WorkspaceInvite[];
+  data: WorkspaceInvitesListResponse;
 };
 
 export interface GetWorkspaceInvitesParams {
   status?: string;
+  page?: number;
+  limit?: number;
 }
 
 export const createAccountInvite = async (
@@ -79,8 +95,8 @@ export const createAccountInvite = async (
 export const getWorkspaceInvites = async (
   workspaceId: string,
   params?: GetWorkspaceInvitesParams,
-): Promise<WorkspaceInvite[]> => {
-  const response = await api.get<GetWorkspaceInvitesResponse>('/web/workspace/invitations', {
+): Promise<WorkspaceInvitesListResponse> => {
+  const response = await api.get<GetWorkspaceInvitesApiResponse>('/web/workspace/invitations', {
     params,
     headers: {
       'workspace-id': workspaceId,
@@ -140,4 +156,3 @@ export const getInvitationHistory = async (
   );
   return response.data.data;
 };
-
