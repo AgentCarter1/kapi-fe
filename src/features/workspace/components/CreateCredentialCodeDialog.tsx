@@ -371,14 +371,28 @@ export const CreateCredentialCodeDialog = ({
                       </div>
                       {licenseStatus.credentialCode.max !== null && bulkLicenseCheck.currentAfter !== null && (
                         <>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2 relative overflow-hidden">
+                            {/* Current usage */}
                             <div
                               className={`h-2 rounded-full transition-all ${
-                                bulkLicenseCheck.wouldExceed
+                                licenseStatus.credentialCode.isLimitReached
                                   ? 'bg-error-500 dark:bg-error-600'
-                                  : bulkLicenseCheck.remainingAfter !== null && bulkLicenseCheck.remainingAfter <= 3
+                                  : licenseStatus.credentialCode.remaining !== null && licenseStatus.credentialCode.remaining <= 3
                                   ? 'bg-warning-500 dark:bg-warning-600'
                                   : 'bg-brand-500 dark:bg-brand-600'
+                              }`}
+                              style={{
+                                width: `${Math.min((licenseStatus.credentialCode.current / licenseStatus.credentialCode.max) * 100, 100)}%`,
+                              }}
+                            />
+                            {/* Future usage after bulk creation */}
+                            <div
+                              className={`h-2 rounded-full transition-all absolute top-0 left-0 ${
+                                bulkLicenseCheck.wouldExceed
+                                  ? 'bg-error-400 dark:bg-error-500 opacity-60'
+                                  : bulkLicenseCheck.remainingAfter !== null && bulkLicenseCheck.remainingAfter <= 3
+                                  ? 'bg-warning-400 dark:bg-warning-500 opacity-60'
+                                  : 'bg-brand-400 dark:bg-brand-500 opacity-50'
                               }`}
                               style={{
                                 width: `${bulkLicenseCheck.percentageAfter}%`,
@@ -461,7 +475,8 @@ export const CreateCredentialCodeDialog = ({
                   </div>
                   {licenseStatus.credentialCode.max !== null && (
                     <>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2 relative overflow-hidden">
+                        {/* Current usage */}
                         <div
                           className={`h-2 rounded-full transition-all ${
                             licenseStatus.credentialCode.isLimitReached
@@ -474,6 +489,19 @@ export const CreateCredentialCodeDialog = ({
                             width: `${Math.min((licenseStatus.credentialCode.current / licenseStatus.credentialCode.max) * 100, 100)}%`,
                           }}
                         />
+                        {/* Future usage after adding (if not at limit) */}
+                        {!licenseStatus.credentialCode.isLimitReached && (
+                          <div
+                            className={`h-2 rounded-full transition-all absolute top-0 left-0 ${
+                              licenseStatus.credentialCode.remaining !== null && licenseStatus.credentialCode.remaining <= 2
+                                ? 'bg-warning-400 dark:bg-warning-500 opacity-60'
+                                : 'bg-brand-400 dark:bg-brand-500 opacity-50'
+                            }`}
+                            style={{
+                              width: `${Math.min(((licenseStatus.credentialCode.current + 1) / licenseStatus.credentialCode.max) * 100, 100)}%`,
+                            }}
+                          />
+                        )}
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-gray-600 dark:text-gray-400">

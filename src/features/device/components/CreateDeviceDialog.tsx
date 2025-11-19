@@ -146,7 +146,8 @@ export const CreateDeviceDialog = ({
                     </div>
                     {licenseStatus.device.max !== null && (
                       <>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2 relative overflow-hidden">
+                          {/* Current usage */}
                           <div
                             className={`h-2 rounded-full transition-all ${
                               licenseStatus.device.isLimitReached
@@ -159,6 +160,19 @@ export const CreateDeviceDialog = ({
                               width: `${Math.min((licenseStatus.device.current / licenseStatus.device.max) * 100, 100)}%`,
                             }}
                           />
+                          {/* Future usage after adding (if not at limit) */}
+                          {!licenseStatus.device.isLimitReached && (
+                            <div
+                              className={`h-2 rounded-full transition-all absolute top-0 left-0 ${
+                                licenseStatus.device.remaining !== null && licenseStatus.device.remaining <= 2
+                                  ? 'bg-warning-400 dark:bg-warning-500 opacity-60'
+                                  : 'bg-brand-400 dark:bg-brand-500 opacity-50'
+                              }`}
+                              style={{
+                                width: `${Math.min(((licenseStatus.device.current + 1) / licenseStatus.device.max) * 100, 100)}%`,
+                              }}
+                            />
+                          )}
                         </div>
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-gray-600 dark:text-gray-400">

@@ -37,6 +37,11 @@ const processQueue = (error: Error | null, token: string | null = null) => {
  */
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // Skip adding access token if Authorization header is already set (e.g., refresh token endpoint)
+    if (config.headers?.Authorization) {
+      return config;
+    }
+    
     const token = localStorage.getItem('accessToken');
     
     if (token && config.headers) {
@@ -126,9 +131,18 @@ api.interceptors.response.use(
 
             const newTokens = response.data.data!;
             
-            // Save new tokens
+            // Save new tokens to localStorage
             localStorage.setItem('accessToken', newTokens.accessToken);
             localStorage.setItem('refreshToken', newTokens.refreshToken);
+
+            // Dispatch custom event to update Redux store
+            // Components listening to this event will update Redux store
+            window.dispatchEvent(new CustomEvent('tokensRefreshed', {
+              detail: {
+                accessToken: newTokens.accessToken,
+                refreshToken: newTokens.refreshToken,
+              },
+            }));
 
             // Update default authorization header
             if (originalRequest.headers) {

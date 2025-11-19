@@ -118,6 +118,19 @@ export const WorkspaceInvitations = () => {
     return new Date(expireAt) < new Date();
   };
 
+  const isExpiringSoon = (expireAt: string, status: string) => {
+    // Only show red if status is PENDING and expiring within 3 days
+    if (status !== 'PENDING' && status !== 'pending') {
+      return false;
+    }
+    const now = new Date();
+    const expireDate = new Date(expireAt);
+    const diffInMs = expireDate.getTime() - now.getTime();
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+    // Show red if expiring within 3 days and not expired yet
+    return diffInDays > 0 && diffInDays <= 3;
+  };
+
   if (!currentWorkspace) {
     return (
       <div className="bg-warning-50 dark:bg-warning-950 border border-warning-200 dark:border-warning-800 rounded-lg p-4">
@@ -247,7 +260,14 @@ export const WorkspaceInvitations = () => {
                   </thead>
                   <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                     {invites.map((invite) => (
-                      <tr key={invite.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                      <tr 
+                        key={invite.id} 
+                        className={`transition-colors ${
+                          invite.status === 'EXPIRED' || isExpired(invite.expireAt)
+                            ? 'bg-gray-50/50 dark:bg-gray-800/30 opacity-75'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                        }`}
+                      >
                         <td className="px-6 py-4">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
@@ -281,7 +301,7 @@ export const WorkspaceInvitations = () => {
                         <td className="px-6 py-4 text-sm">
                           <span
                             className={
-                              isExpired(invite.expireAt)
+                              isExpiringSoon(invite.expireAt, invite.status)
                                 ? 'text-error-600 dark:text-error-400 font-medium'
                                 : 'text-gray-600 dark:text-gray-400'
                             }
@@ -309,7 +329,7 @@ export const WorkspaceInvitations = () => {
                             </button>
 
                             {/* Cancel Button */}
-                            {invite.status === 'PENDING' && (
+                            {invite.status === 'PENDING' && !isExpired(invite.expireAt) && (
                               <button
                                 onClick={() => handleCancelInvitation(invite.id, invite.email)}
                                 disabled={cancelMutation.isPending}

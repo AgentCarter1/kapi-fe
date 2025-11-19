@@ -4,15 +4,153 @@ import { getWorkspaces } from '../api/endpoints/workspaces';
 import type { Workspace } from '../api/endpoints/workspaces';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setCurrentWorkspace } from '../store/slices/authSlice';
+import { useSetDefaultWorkspace } from '../features/workspace/api/workspaceApi';
+import toast from 'react-hot-toast';
+
+// Helper function to check if workspace access is available
+const isWorkspaceAccessAvailable = (workspace: Workspace): boolean => {
+  const now = new Date();
+  const startDate = workspace.accessStartDate ? new Date(workspace.accessStartDate) : null;
+  const endDate = workspace.accessEndDate ? new Date(workspace.accessEndDate) : null;
+
+  if (startDate && now < startDate) {
+    return false; // Access hasn't started yet
+  }
+  if (endDate && now > endDate) {
+    return false; // Access has expired
+  }
+  return true; // Access is available (no time restrictions or within range)
+};
+
+// Hook to get countdown timer
+const useCountdown = (targetDate: string | null) => {
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!targetDate) {
+      setTimeLeft(null);
+      return;
+    }
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const target = new Date(targetDate);
+      const diff = target.getTime() - now.getTime();
+      
+      if (diff <= 0) {
+        setTimeLeft(null);
+        return;
+      }
+      
+      setTimeLeft(diff);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [targetDate]);
+
+  return timeLeft;
+};
+
+// Helper function to format countdown
+const formatCountdown = (ms: number): string => {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) {
+    return `${days} gün ${hours % 24} saat`;
+  }
+  if (hours > 0) {
+    return `${hours} saat ${minutes % 60} dakika`;
+  }
+  if (minutes > 0) {
+    return `${minutes} dakika ${seconds % 60} saniye`;
+  }
+  return `${seconds} saniye`;
+};
+
+// Workspace item component with countdown
+interface WorkspaceItemProps {
+  workspace: Workspace;
+  isSelected: boolean;
+  isPending: boolean;
+  onSelect: (workspace: Workspace) => void;
+}
+
+const WorkspaceItem: React.FC<WorkspaceItemProps> = ({ workspace, isSelected, isPending, onSelect }) => {
+  const isAccessAvailable = isWorkspaceAccessAvailable(workspace);
+  const countdown = useCountdown(workspace.accessStartDate);
+  const isDisabled = !isAccessAvailable && workspace.accessStartDate && countdown !== null;
+
+  return (
+    <button
+      onClick={() => onSelect(workspace)}
+      disabled={isPending || isDisabled}
+      className={`w-full text-left px-4 py-3 transition-colors ${
+        isSelected
+          ? 'bg-blue-50 border-l-4 border-blue-500'
+          : isDisabled
+          ? 'bg-gray-50 opacity-60 cursor-not-allowed'
+          : 'hover:bg-gray-50'
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center space-x-2">
+            <p className={`text-sm font-medium truncate ${
+              isDisabled ? 'text-gray-500' : 'text-gray-900'
+            }`}>
+              {workspace.workspaceName}
+            </p>
+            {workspace.isDefault && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                Default
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 mt-1">{workspace.accountType}</p>
+          {isDisabled && countdown !== null && (
+            <p className="text-xs text-orange-600 mt-1 font-medium">
+              ⏳ Erişim {formatCountdown(countdown)} sonra başlayacak
+            </p>
+          )}
+          {!isAccessAvailable && workspace.accessEndDate && new Date() > new Date(workspace.accessEndDate) && (
+            <p className="text-xs text-red-600 mt-1 font-medium">
+              ❌ Erişim süresi doldu
+            </p>
+          )}
+        </div>
+        {isSelected && (
+          <svg
+            className="w-5 h-5 text-blue-500 flex-shrink-0"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+              clipRule="evenodd"
+            />
+          </svg>
+        )}
+      </div>
+    </button>
+  );
+};
 
 export const WorkspaceSelector: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dispatch = useAppDispatch();
   const currentWorkspace = useAppSelector((state) => state.auth.currentWorkspace);
+  const setDefaultWorkspaceMutation = useSetDefaultWorkspace();
 
   const { data: workspaces, isLoading } = useQuery({
-    queryKey: ['workspaces'],
+    queryKey: ['account-workspaces'],
     queryFn: getWorkspaces,
   });
 
@@ -36,9 +174,35 @@ export const WorkspaceSelector: React.FC = () => {
     }
   }, [workspaces, currentWorkspace, dispatch]);
 
-  const handleWorkspaceSelect = (workspace: Workspace) => {
-    dispatch(setCurrentWorkspace(workspace));
-    setIsOpen(false);
+  const handleWorkspaceSelect = async (workspace: Workspace) => {
+    // Check if workspace access is available
+    if (!isWorkspaceAccessAvailable(workspace)) {
+      const now = new Date();
+      const startDate = workspace.accessStartDate ? new Date(workspace.accessStartDate) : null;
+      const endDate = workspace.accessEndDate ? new Date(workspace.accessEndDate) : null;
+
+      if (startDate && now < startDate) {
+        toast.error(`Bu workspace'e erişim henüz başlamadı. Erişim ${startDate.toLocaleString('tr-TR')} tarihinde başlayacak.`);
+      } else if (endDate && now > endDate) {
+        toast.error(`Bu workspace'e erişim süresi doldu. Erişim ${endDate.toLocaleString('tr-TR')} tarihinde sona erdi.`);
+      } else {
+        toast.error('Bu workspace\'e şu anda erişim mevcut değil.');
+      }
+      return;
+    }
+
+    try {
+      // Set as default workspace via API
+      await setDefaultWorkspaceMutation.mutateAsync(workspace.workspaceId);
+      
+      // Update Redux state
+      dispatch(setCurrentWorkspace(workspace));
+      setIsOpen(false);
+      toast.success('Workspace seçildi ✨');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Workspace seçilemedi';
+      toast.error(errorMessage);
+    }
   };
 
   if (isLoading) {
@@ -95,44 +259,13 @@ export const WorkspaceSelector: React.FC = () => {
           </div>
           <div className="max-h-60 overflow-y-auto">
             {workspaces.map((workspace) => (
-              <button
+              <WorkspaceItem
                 key={workspace.id}
-                onClick={() => handleWorkspaceSelect(workspace)}
-                className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
-                  currentWorkspace?.workspaceId === workspace.workspaceId
-                    ? 'bg-blue-50 border-l-4 border-blue-500'
-                    : ''
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {workspace.workspaceName}
-                      </p>
-                      {workspace.isDefault && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                          Default
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">{workspace.accountType}</p>
-                  </div>
-                  {currentWorkspace?.workspaceId === workspace.workspaceId && (
-                    <svg
-                      className="w-5 h-5 text-blue-500 flex-shrink-0"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  )}
-                </div>
-              </button>
+                workspace={workspace}
+                isSelected={currentWorkspace?.workspaceId === workspace.workspaceId}
+                isPending={setDefaultWorkspaceMutation.isPending}
+                onSelect={handleWorkspaceSelect}
+              />
             ))}
           </div>
         </div>

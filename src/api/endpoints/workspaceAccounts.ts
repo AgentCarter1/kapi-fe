@@ -8,6 +8,8 @@ export type WorkspaceAccount = {
   lastName?: string;
   accountType: string;
   status: string;
+  startAt?: string | null;
+  endAt?: string | null;
   createdAt: string;
 };
 

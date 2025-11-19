@@ -7,6 +7,8 @@ export type Workspace = {
   accountType: string;
   status: string;
   isDefault: boolean;
+  accessStartDate: string | null;
+  accessEndDate: string | null;
 };
 
 type WorkspacesResponse = {

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AccountProfile } from './features/account/components/AccountProfile';
@@ -15,7 +16,8 @@ import { WorkspaceAntiPassbacksPage } from './features/anti-passback/pages/Works
 import { Zones } from './features/zone/pages/Zones';
 import { Devices } from './features/device/pages/Devices';
 import { DashboardLayout } from './layouts/DashboardLayout';
-import { useAppSelector } from './store/hooks';
+import { useAppSelector, useAppDispatch } from './store/hooks';
+import { setCredentials } from './store/slices/authSlice';
 
 // Protected Route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -59,6 +61,23 @@ const DashboardHome = () => {
 
 function App() {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const dispatch = useAppDispatch();
+  
+  // Listen for token refresh events from apiClient interceptor
+  useEffect(() => {
+    const handleTokensRefreshed = (event: CustomEvent<{ accessToken: string; refreshToken: string }>) => {
+      dispatch(setCredentials({
+        accessToken: event.detail.accessToken,
+        refreshToken: event.detail.refreshToken,
+      }));
+    };
+
+    window.addEventListener('tokensRefreshed', handleTokensRefreshed as EventListener);
+
+    return () => {
+      window.removeEventListener('tokensRefreshed', handleTokensRefreshed as EventListener);
+    };
+  }, [dispatch]);
   
   return (
     <BrowserRouter>

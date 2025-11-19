@@ -341,6 +341,9 @@ export const WorkspaceAccounts = () => {
                         Joined
                       </th>
                       <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Access Period
+                      </th>
+                      <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -410,6 +413,38 @@ export const WorkspaceAccounts = () => {
                               month: 'short',
                               day: 'numeric',
                             })}
+                          </td>
+                          <td className="px-6 py-4">
+                            {account.startAt || account.endAt ? (
+                              <div className="text-sm text-gray-600 dark:text-gray-400">
+                                {account.startAt && (
+                                  <div className="mb-1">
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Başlangıç: </span>
+                                    <span>{new Date(account.startAt).toLocaleDateString('tr-TR', {
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}</span>
+                                  </div>
+                                )}
+                                {account.endAt && (
+                                  <div>
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">Bitiş: </span>
+                                    <span>{new Date(account.endAt).toLocaleDateString('tr-TR', {
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}</span>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-sm text-gray-400 dark:text-gray-500 italic">Süresiz</span>
+                            )}
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">

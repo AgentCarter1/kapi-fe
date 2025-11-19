@@ -124,6 +124,19 @@ export const AccountInvites = () => {
     return new Date(expireAt) < new Date();
   };
 
+  const isExpiringSoon = (expireAt: string, status: InviteStatus | string) => {
+    // Only show red if status is PENDING and expiring within 3 days
+    if (status !== InviteStatus.PENDING && status !== 'PENDING') {
+      return false;
+    }
+    const now = new Date();
+    const expireDate = new Date(expireAt);
+    const diffInMs = expireDate.getTime() - now.getTime();
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+    // Show red if expiring within 3 days and not expired yet
+    return diffInDays > 0 && diffInDays <= 3;
+  };
+
   return (
     <>
       {/* History Dialog */}
@@ -227,10 +240,16 @@ export const AccountInvites = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
-              {invites.map((invite) => (
+              {invites.map((invite) => {
+                const isInviteExpired = invite.status === InviteStatus.EXPIRED || isExpired(invite.expireAt);
+                return (
                 <div
                   key={invite.id}
-                  className="bg-white dark:bg-gray-900 shadow-theme-xs rounded-lg p-6 border border-gray-200 dark:border-gray-800 hover:border-brand-300 dark:hover:border-brand-700 transition-all"
+                  className={`bg-white dark:bg-gray-900 shadow-theme-xs rounded-lg p-6 border transition-all ${
+                    isInviteExpired
+                      ? 'border-gray-300 dark:border-gray-700 opacity-75'
+                      : 'border-gray-200 dark:border-gray-800 hover:border-brand-300 dark:hover:border-brand-700'
+                  }`}
                 >
                   <div className="flex items-start justify-between">
                     {/* Main Content */}
@@ -264,7 +283,7 @@ export const AccountInvites = () => {
                           <span className="font-medium mr-1">Expires:</span>
                           <span
                             className={
-                              isExpired(invite.expireAt)
+                              isExpiringSoon(invite.expireAt, invite.status)
                                 ? 'text-error-600 dark:text-error-400 font-medium'
                                 : 'text-gray-700 dark:text-gray-300'
                             }
@@ -339,7 +358,7 @@ export const AccountInvites = () => {
                     </button>
 
                     {/* Accept/Decline Buttons */}
-                    {invite.status === InviteStatus.PENDING && !isExpired(invite.expireAt) && (
+                    {(invite.status === InviteStatus.PENDING || invite.status === 'PENDING') && !isExpired(invite.expireAt) && (
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => handleDeclineInvitation(invite.id, invite.zoneName)}
@@ -359,9 +378,17 @@ export const AccountInvites = () => {
                         </button>
                       </div>
                     )}
+                    {/* Expired Message */}
+                    {invite.status === InviteStatus.EXPIRED && (
+                      <div className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <Clock className="h-4 w-4" />
+                        <span>This invitation has expired</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           )}
         </>
