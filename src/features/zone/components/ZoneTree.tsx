@@ -13,6 +13,7 @@ interface ZoneTreeProps {
   onSelect: (zone: Zone) => void;
   selectedZoneId: string | null;
   hideUnits?: boolean;
+  defaultExpanded?: boolean; // If true, all nodes start expanded
 }
 
 export const ZoneTree = ({
@@ -26,6 +27,7 @@ export const ZoneTree = ({
   onSelect,
   selectedZoneId,
   hideUnits = false,
+  defaultExpanded = false,
 }: ZoneTreeProps) => {
   if (isLoading) {
     return (
@@ -83,9 +85,9 @@ export const ZoneTree = ({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 shadow-theme-xs rounded-lg border border-gray-200 dark:border-gray-800">
+    <div className="h-[600px] flex flex-col bg-white dark:bg-gray-900 shadow-theme-xs rounded-lg border border-gray-200 dark:border-gray-800">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between flex-shrink-0">
         <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90">Zone Hierarchy</h3>
         <button
           onClick={onAddRoot}
@@ -96,8 +98,8 @@ export const ZoneTree = ({
         </button>
       </div>
 
-      {/* Tree */}
-      <div className="p-2">
+      {/* Tree - Scrollable */}
+      <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
         {zones.map((zone) => (
           <ZoneTreeNode
             key={zone.id}
@@ -109,6 +111,7 @@ export const ZoneTree = ({
             onSelect={onSelect}
             selectedZoneId={selectedZoneId}
             hideUnits={hideUnits}
+            defaultExpanded={defaultExpanded}
           />
         ))}
       </div>

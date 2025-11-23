@@ -193,6 +193,17 @@ export const LoginForm = () => {
             )}
           </button>
 
+          {/* Forgot Password Link */}
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => navigate('/auth/forgot-password')}
+              className="text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
+            >
+              Forgot password?
+            </button>
+          </div>
+
           {/* Sign Up Link */}
           <div className="text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">

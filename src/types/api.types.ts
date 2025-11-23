@@ -48,6 +48,32 @@ export interface VerifyAccountResponse {
   refreshToken: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
+export interface VerifyForgotPasswordOtpRequest {
+  email: string;
+  otpCode: string;
+}
+
+export interface VerifyForgotPasswordOtpResponse {
+  forgotPasswordToken: string;
+}
+
+export interface ResetPasswordRequest {
+  password: string;
+  passwordConfirmation: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+}
+
 /**
  * User Related Types
  */

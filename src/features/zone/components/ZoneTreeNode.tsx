@@ -1,7 +1,11 @@
-import { useState } from 'react';
-import { ChevronRight, ChevronDown, Edit, Trash2, Plus } from 'lucide-react';
-import type { Zone } from '../../../api/endpoints/zones';
-import { ZONE_TYPE_ICONS, ZoneType, getAllowedChildTypes } from '../../../api/endpoints/zones';
+import { useState } from "react";
+import { ChevronRight, ChevronDown, Edit, Trash2, Plus } from "lucide-react";
+import type { Zone } from "../../../api/endpoints/zones";
+import {
+  ZONE_TYPE_ICONS,
+  ZoneType,
+  getAllowedChildTypes,
+} from "../../../api/endpoints/zones";
 
 interface ZoneTreeNodeProps {
   zone: Zone;
@@ -12,36 +16,40 @@ interface ZoneTreeNodeProps {
   onSelect: (zone: Zone) => void;
   selectedZoneId: string | null;
   hideUnits?: boolean; // If true, don't render Unit type zones
+  defaultExpanded?: boolean; // If true, node starts expanded
 }
 
-export const ZoneTreeNode = ({ 
-  zone, 
-  level, 
-  onEdit, 
-  onDelete, 
-  onAddChild, 
-  onSelect, 
+export const ZoneTreeNode = ({
+  zone,
+  level,
+  onEdit,
+  onDelete,
+  onAddChild,
+  onSelect,
   selectedZoneId,
-  hideUnits = false 
+  hideUnits = false,
+  defaultExpanded = false,
 }: ZoneTreeNodeProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
   const zoneTypeNumber = parseInt(zone.zoneTypeId) as number;
-  const icon = ZONE_TYPE_ICONS[zoneTypeNumber] || '📍';
-  
+  const icon = ZONE_TYPE_ICONS[zoneTypeNumber] || "📍";
+
   // If hideUnits is true and this is a Unit, don't render it
   if (hideUnits && zoneTypeNumber === ZoneType.UNIT) {
     return null;
   }
-  
+
   // Filter children to exclude Units if hideUnits is true
-  const visibleChildren = hideUnits 
-    ? zone.children?.filter(child => parseInt(child.zoneTypeId) !== ZoneType.UNIT)
+  const visibleChildren = hideUnits
+    ? zone.children?.filter(
+        (child) => parseInt(child.zoneTypeId) !== ZoneType.UNIT
+      )
     : zone.children;
-  
+
   const hasChildren = visibleChildren && visibleChildren.length > 0;
   const isSelected = zone.id === selectedZoneId;
-  
+
   // Check if this zone type can have children
   const allowedChildTypes = getAllowedChildTypes(zoneTypeNumber);
   const canHaveChildren = allowedChildTypes.length > 0;
@@ -52,9 +60,9 @@ export const ZoneTreeNode = ({
       <div
         onClick={() => onSelect(zone)}
         className={`group flex items-center gap-2 px-3 py-2 rounded-lg transition-colors cursor-pointer ${
-          isSelected 
-            ? 'bg-brand-50 dark:bg-brand-950/50 border-l-2 border-brand-500 dark:border-brand-600' 
-            : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+          isSelected
+            ? "bg-brand-50 dark:bg-brand-950/50 border-l-2 border-brand-500 dark:border-brand-600"
+            : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
         }`}
         style={{ paddingLeft: `${level * 24 + 12}px` }}
       >
@@ -65,9 +73,9 @@ export const ZoneTreeNode = ({
             setIsExpanded(!isExpanded);
           }}
           className={`flex-shrink-0 w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
-            !hasChildren ? 'invisible' : ''
+            !hasChildren ? "invisible" : ""
           }`}
-          aria-label={isExpanded ? 'Collapse' : 'Expand'}
+          aria-label={isExpanded ? "Collapse" : "Expand"}
         >
           {hasChildren &&
             (isExpanded ? (
@@ -151,6 +159,7 @@ export const ZoneTreeNode = ({
               onSelect={onSelect}
               selectedZoneId={selectedZoneId}
               hideUnits={hideUnits}
+              defaultExpanded={defaultExpanded}
             />
           ))}
         </div>
@@ -158,4 +167,3 @@ export const ZoneTreeNode = ({
     </div>
   );
 };
-

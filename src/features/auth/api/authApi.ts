@@ -6,6 +6,12 @@ import type {
   SignUpResponse,
   VerifyAccountRequest,
   VerifyAccountResponse,
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
+  VerifyForgotPasswordOtpRequest,
+  VerifyForgotPasswordOtpResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
   ApiResponse,
 } from '../../../types';
 
@@ -63,6 +69,46 @@ export const refreshToken = async (token: string): Promise<LoginResponse> => {
   const response = await api.post<ApiResponse<LoginResponse>>(
     '/web/auth/refresh-token',
     {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return response.data.data!;
+};
+
+/**
+ * Request password reset - sends OTP to email
+ */
+export const forgotPassword = async (data: ForgotPasswordRequest): Promise<ForgotPasswordResponse> => {
+  const response = await api.post<ApiResponse<ForgotPasswordResponse>>('/web/auth/forgot-password', data);
+  return response.data.data!;
+};
+
+/**
+ * Verify forgot password OTP and get reset token
+ */
+export const verifyForgotPasswordOtp = async (
+  data: VerifyForgotPasswordOtpRequest
+): Promise<VerifyForgotPasswordOtpResponse> => {
+  const response = await api.post<ApiResponse<VerifyForgotPasswordOtpResponse>>(
+    '/web/auth/forgot-password/verify-otp',
+    data
+  );
+  return response.data.data!;
+};
+
+/**
+ * Reset password using forgot password token
+ */
+export const resetPassword = async (
+  token: string,
+  data: ResetPasswordRequest
+): Promise<ResetPasswordResponse> => {
+  const response = await api.post<ApiResponse<ResetPasswordResponse>>(
+    '/web/auth/reset-password',
+    data,
     {
       headers: {
         Authorization: `Bearer ${token}`,

@@ -6,6 +6,9 @@ import { AccountInvites } from './features/account/components/AccountInvites';
 import { LoginForm } from './features/auth/components/LoginForm';
 import { SignUpForm } from './features/auth/components/SignUpForm';
 import { VerifyAccountForm } from './features/auth/components/VerifyAccountForm';
+import { ForgotPasswordForm } from './features/auth/components/ForgotPasswordForm';
+import { VerifyForgotPasswordOtpForm } from './features/auth/components/VerifyForgotPasswordOtpForm';
+import { ResetPasswordForm } from './features/auth/components/ResetPasswordForm';
 import { AuthGoogleCallback } from './features/auth/components/AuthGoogleCallback';
 import { WorkspaceAccountsPage } from './features/workspace/pages/WorkspaceAccountsPage';
 import { WorkspaceInvitationsPage } from './features/workspace/pages/WorkspaceInvitationsPage';
@@ -15,6 +18,7 @@ import { WorkspaceLicensePage } from './features/workspace/pages/WorkspaceLicens
 import { WorkspaceAntiPassbacksPage } from './features/anti-passback/pages/WorkspaceAntiPassbacksPage';
 import { Zones } from './features/zone/pages/Zones';
 import { Devices } from './features/device/pages/Devices';
+import { Building } from './features/building/pages/Building';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { useAppSelector, useAppDispatch } from './store/hooks';
 import { setCredentials } from './store/slices/authSlice';
@@ -112,6 +116,9 @@ function App() {
         <Route path="/auth/login" element={<LoginForm />} />
         <Route path="/auth/sign-up" element={<SignUpForm />} />
         <Route path="/auth/verify" element={<VerifyAccountForm />} />
+        <Route path="/auth/forgot-password" element={<ForgotPasswordForm />} />
+        <Route path="/auth/forgot-password/verify-otp" element={<VerifyForgotPasswordOtpForm />} />
+        <Route path="/auth/reset-password" element={<ResetPasswordForm />} />
         <Route path="/auth/google/callback" element={<AuthGoogleCallback />} />
         
         {/* Protected Routes with Layout */}
@@ -161,6 +168,16 @@ function App() {
             <ProtectedRoute>
               <DashboardLayout>
                 <Devices />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/building"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Building />
               </DashboardLayout>
             </ProtectedRoute>
           }
