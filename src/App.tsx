@@ -10,6 +10,13 @@ import { ForgotPasswordForm } from './features/auth/components/ForgotPasswordFor
 import { VerifyForgotPasswordOtpForm } from './features/auth/components/VerifyForgotPasswordOtpForm';
 import { ResetPasswordForm } from './features/auth/components/ResetPasswordForm';
 import { AuthGoogleCallback } from './features/auth/components/AuthGoogleCallback';
+import { AdminLoginForm } from './features/auth/components/AdminLoginForm';
+import { AdminDashboardLayout } from './layouts/AdminDashboardLayout';
+import { AdminDashboard } from './features/admin/pages/AdminDashboard';
+import { AdminAccountsPage } from './features/admin/pages/AdminAccountsPage';
+import { AdminDevicesPage } from './features/admin/pages/AdminDevicesPage';
+import { AdminWorkspacesPage } from './features/admin/pages/AdminWorkspacesPage';
+import { AdminLicensesPage } from './features/admin/pages/AdminLicensesPage';
 import { WorkspaceAccountsPage } from './features/workspace/pages/WorkspaceAccountsPage';
 import { WorkspaceInvitationsPage } from './features/workspace/pages/WorkspaceInvitationsPage';
 import { WorkspaceCredentialCodesPage } from './features/workspace/pages/WorkspaceCredentialCodesPage';
@@ -120,6 +127,61 @@ function App() {
         <Route path="/auth/forgot-password/verify-otp" element={<VerifyForgotPasswordOtpForm />} />
         <Route path="/auth/reset-password" element={<ResetPasswordForm />} />
         <Route path="/auth/google/callback" element={<AuthGoogleCallback />} />
+        
+        {/* Admin Auth Routes */}
+        <Route path="/auth/admin/login" element={<AdminLoginForm />} />
+        
+        {/* Admin Protected Routes */}
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute>
+              <AdminDashboardLayout>
+                <AdminDashboard />
+              </AdminDashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/accounts"
+          element={
+            <ProtectedRoute>
+              <AdminDashboardLayout>
+                <AdminAccountsPage />
+              </AdminDashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/devices"
+          element={
+            <ProtectedRoute>
+              <AdminDashboardLayout>
+                <AdminDevicesPage />
+              </AdminDashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/workspaces"
+          element={
+            <ProtectedRoute>
+              <AdminDashboardLayout>
+                <AdminWorkspacesPage />
+              </AdminDashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/licenses"
+          element={
+            <ProtectedRoute>
+              <AdminDashboardLayout>
+                <AdminLicensesPage />
+              </AdminDashboardLayout>
+            </ProtectedRoute>
+          }
+        />
         
         {/* Protected Routes with Layout */}
         <Route

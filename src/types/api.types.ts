@@ -75,6 +75,19 @@ export interface ResetPasswordResponse {
 }
 
 /**
+ * Admin Related Types
+ */
+export interface AdminLoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AdminLoginResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+/**
  * User Related Types
  */
 export interface User {

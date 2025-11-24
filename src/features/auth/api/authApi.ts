@@ -12,6 +12,8 @@ import type {
   VerifyForgotPasswordOtpResponse,
   ResetPasswordRequest,
   ResetPasswordResponse,
+  AdminLoginRequest,
+  AdminLoginResponse,
   ApiResponse,
 } from '../../../types';
 
@@ -19,6 +21,14 @@ import type {
  * Auth API Service
  * Handles all authentication-related API calls
  */
+
+/**
+ * Admin login
+ */
+export const adminLogin = async (credentials: AdminLoginRequest): Promise<AdminLoginResponse> => {
+  const response = await api.post<ApiResponse<AdminLoginResponse>>('/admin/auth/login', credentials);
+  return response.data.data!;
+};
 
 /**
  * Login user
