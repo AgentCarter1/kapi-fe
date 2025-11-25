@@ -1,5 +1,5 @@
 import { useForm } from 'react-hook-form';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -18,6 +18,7 @@ export const VerifyAccountForm = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
   const state = location.state as LocationState;
   
   // Get token from URL query parameter or location state
@@ -55,10 +56,16 @@ export const VerifyAccountForm = () => {
     mutationFn: (data: VerifyAccountRequest) => 
       verifyAccount(verifyToken, data),
     onSuccess: (data) => {
+      queryClient.removeQueries({ queryKey: ['account', 'self'], exact: false });
       // Save tokens to Redux and localStorage (same as login)
       dispatch(setCredentials({
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
+        user: {
+          id: data.accountId,
+          email: data.email,
+          isSuperAdmin: data.isSuperAdmin,
+        },
       }));
       
       // Navigate to dashboard (user is now logged in)

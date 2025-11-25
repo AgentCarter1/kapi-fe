@@ -10,7 +10,6 @@ import { ForgotPasswordForm } from './features/auth/components/ForgotPasswordFor
 import { VerifyForgotPasswordOtpForm } from './features/auth/components/VerifyForgotPasswordOtpForm';
 import { ResetPasswordForm } from './features/auth/components/ResetPasswordForm';
 import { AuthGoogleCallback } from './features/auth/components/AuthGoogleCallback';
-import { AdminLoginForm } from './features/auth/components/AdminLoginForm';
 import { AdminDashboardLayout } from './layouts/AdminDashboardLayout';
 import { AdminDashboard } from './features/admin/pages/AdminDashboard';
 import { AdminAccountsPage } from './features/admin/pages/AdminAccountsPage';
@@ -30,7 +29,7 @@ import { DashboardLayout } from './layouts/DashboardLayout';
 import { useAppSelector, useAppDispatch } from './store/hooks';
 import { setCredentials } from './store/slices/authSlice';
 
-// Protected Route wrapper
+// Protected Route wrappers
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   
@@ -38,6 +37,32 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth/login" replace />;
   }
   
+  return <>{children}</>;
+};
+
+const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const user = useAppSelector((state) => state.auth.user);
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth/login" replace />;
+  }
+
+  if (!user) {
+    return (
+      <>
+        {children}
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-white text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+          Checking permissions...
+        </div>
+      </>
+    );
+  }
+
+  if (!user.isSuperAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <>{children}</>;
 };
 
@@ -128,58 +153,55 @@ function App() {
         <Route path="/auth/reset-password" element={<ResetPasswordForm />} />
         <Route path="/auth/google/callback" element={<AuthGoogleCallback />} />
         
-        {/* Admin Auth Routes */}
-        <Route path="/auth/admin/login" element={<AdminLoginForm />} />
-        
         {/* Admin Protected Routes */}
         <Route
           path="/admin/dashboard"
           element={
-            <ProtectedRoute>
+            <SuperAdminRoute>
               <AdminDashboardLayout>
                 <AdminDashboard />
               </AdminDashboardLayout>
-            </ProtectedRoute>
+            </SuperAdminRoute>
           }
         />
         <Route
           path="/admin/accounts"
           element={
-            <ProtectedRoute>
+            <SuperAdminRoute>
               <AdminDashboardLayout>
                 <AdminAccountsPage />
               </AdminDashboardLayout>
-            </ProtectedRoute>
+            </SuperAdminRoute>
           }
         />
         <Route
           path="/admin/devices"
           element={
-            <ProtectedRoute>
+            <SuperAdminRoute>
               <AdminDashboardLayout>
                 <AdminDevicesPage />
               </AdminDashboardLayout>
-            </ProtectedRoute>
+            </SuperAdminRoute>
           }
         />
         <Route
           path="/admin/workspaces"
           element={
-            <ProtectedRoute>
+            <SuperAdminRoute>
               <AdminDashboardLayout>
                 <AdminWorkspacesPage />
               </AdminDashboardLayout>
-            </ProtectedRoute>
+            </SuperAdminRoute>
           }
         />
         <Route
           path="/admin/licenses"
           element={
-            <ProtectedRoute>
+            <SuperAdminRoute>
               <AdminDashboardLayout>
                 <AdminLicensesPage />
               </AdminDashboardLayout>
-            </ProtectedRoute>
+            </SuperAdminRoute>
           }
         />
         

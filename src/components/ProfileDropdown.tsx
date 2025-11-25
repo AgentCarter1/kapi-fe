@@ -1,55 +1,60 @@
-import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, Mail, LogOut, Moon, Sun } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { logout } from '../store/slices/authSlice';
-import { useTheme } from '../context/ThemeContext';
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { User, Mail, LogOut, Shield } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { logout } from "../store/slices/authSlice";
 
 export const ProfileDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
-  const { theme, toggleTheme } = useTheme();
-  
-  // Get user info from store
-  const userEmail = useAppSelector((state) => state.auth.user?.email || 'User');
-  const userName = useAppSelector((state) => {
-    const user = state.auth.user;
-    return user?.firstName || user?.lastName
-      ? `${user.firstName || ''} ${user.lastName || ''}`.trim()
-      : userEmail;
-  });
+  const queryClient = useQueryClient();
 
+  // Get user info from store
+  const userEmail = useAppSelector((state) => state.auth.user?.email || "User");
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
 
   const handleLogout = async () => {
     try {
-      const { logout: logoutApi } = await import('../features/auth/api/authApi');
+      const { logout: logoutApi } = await import(
+        "../features/auth/api/authApi"
+      );
       await logoutApi();
+      queryClient.clear();
       dispatch(logout());
-      navigate('/auth/login');
+      navigate("/auth/login");
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
+      queryClient.clear();
       dispatch(logout());
-      navigate('/auth/login');
+      navigate("/auth/login");
     }
   };
+
+  const isSuperAdmin = useAppSelector(
+    (state) => state.auth.user?.isSuperAdmin ?? false
+  );
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -72,12 +77,19 @@ export const ProfileDropdown = () => {
           {getInitials(userEmail)}
         </div>
         <svg
-          className={`h-4 w-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`h-4 w-4 text-gray-500 transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
         </svg>
       </button>
 
@@ -94,8 +106,19 @@ export const ProfileDropdown = () => {
 
           {/* Menu Items */}
           <div className="py-1">
+            {isSuperAdmin &&
+              location.pathname?.startsWith("/admin") === false && (
+                <button
+                  onClick={() => handleNavigate("/admin/dashboard")}
+                  className="w-full flex items-center px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 transition-colors"
+                >
+                  <Shield className="h-4 w-4 mr-3 text-indigo-600" />
+                  Admin Panel
+                </button>
+              )}
+
             <button
-              onClick={() => handleNavigate('/account')}
+              onClick={() => handleNavigate("/account")}
               className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
             >
               <User className="h-4 w-4 mr-3 text-gray-500" />
@@ -103,7 +126,7 @@ export const ProfileDropdown = () => {
             </button>
 
             <button
-              onClick={() => handleNavigate('/account/invites')}
+              onClick={() => handleNavigate("/account/invites")}
               className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
             >
               <Mail className="h-4 w-4 mr-3 text-gray-500" />
@@ -126,4 +149,3 @@ export const ProfileDropdown = () => {
     </div>
   );
 };
-

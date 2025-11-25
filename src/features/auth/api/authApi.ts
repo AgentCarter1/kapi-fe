@@ -1,4 +1,4 @@
-import { api } from '../../../api/apiClient';
+import { api } from "../../../api/apiClient";
 import type {
   LoginRequest,
   LoginResponse,
@@ -12,10 +12,8 @@ import type {
   VerifyForgotPasswordOtpResponse,
   ResetPasswordRequest,
   ResetPasswordResponse,
-  AdminLoginRequest,
-  AdminLoginResponse,
   ApiResponse,
-} from '../../../types';
+} from "../../../types";
 
 /**
  * Auth API Service
@@ -23,18 +21,15 @@ import type {
  */
 
 /**
- * Admin login
- */
-export const adminLogin = async (credentials: AdminLoginRequest): Promise<AdminLoginResponse> => {
-  const response = await api.post<ApiResponse<AdminLoginResponse>>('/admin/auth/login', credentials);
-  return response.data.data!;
-};
-
-/**
  * Login user
  */
-export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
-  const response = await api.post<ApiResponse<LoginResponse>>('/web/auth/login', credentials);
+export const login = async (
+  credentials: LoginRequest
+): Promise<LoginResponse> => {
+  const response = await api.post<ApiResponse<LoginResponse>>(
+    "/web/auth/login",
+    credentials
+  );
   return response.data.data!;
 };
 
@@ -42,7 +37,10 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
  * Sign up new user
  */
 export const signUp = async (data: SignUpRequest): Promise<SignUpResponse> => {
-  const response = await api.post<ApiResponse<SignUpResponse>>('/web/auth/sign-up', data);
+  const response = await api.post<ApiResponse<SignUpResponse>>(
+    "/web/auth/sign-up",
+    data
+  );
   return response.data.data!;
 };
 
@@ -54,7 +52,7 @@ export const verifyAccount = async (
   data: VerifyAccountRequest
 ): Promise<VerifyAccountResponse> => {
   const response = await api.post<ApiResponse<VerifyAccountResponse>>(
-    '/web/auth/account/verify',
+    "/web/auth/account/verify",
     data,
     {
       headers: {
@@ -69,7 +67,7 @@ export const verifyAccount = async (
  * Logout user - invalidates access and refresh tokens
  */
 export const logout = async (): Promise<void> => {
-  await api.post('/web/auth/logout');
+  await api.post("/web/auth/logout");
 };
 
 /**
@@ -77,7 +75,7 @@ export const logout = async (): Promise<void> => {
  */
 export const refreshToken = async (token: string): Promise<LoginResponse> => {
   const response = await api.post<ApiResponse<LoginResponse>>(
-    '/web/auth/refresh-token',
+    "/web/auth/refresh-token",
     {},
     {
       headers: {
@@ -91,8 +89,13 @@ export const refreshToken = async (token: string): Promise<LoginResponse> => {
 /**
  * Request password reset - sends OTP to email
  */
-export const forgotPassword = async (data: ForgotPasswordRequest): Promise<ForgotPasswordResponse> => {
-  const response = await api.post<ApiResponse<ForgotPasswordResponse>>('/web/auth/forgot-password', data);
+export const forgotPassword = async (
+  data: ForgotPasswordRequest
+): Promise<ForgotPasswordResponse> => {
+  const response = await api.post<ApiResponse<ForgotPasswordResponse>>(
+    "/web/auth/forgot-password",
+    data
+  );
   return response.data.data!;
 };
 
@@ -103,7 +106,7 @@ export const verifyForgotPasswordOtp = async (
   data: VerifyForgotPasswordOtpRequest
 ): Promise<VerifyForgotPasswordOtpResponse> => {
   const response = await api.post<ApiResponse<VerifyForgotPasswordOtpResponse>>(
-    '/web/auth/forgot-password/verify-otp',
+    "/web/auth/forgot-password/verify-otp",
     data
   );
   return response.data.data!;
@@ -117,7 +120,7 @@ export const resetPassword = async (
   data: ResetPasswordRequest
 ): Promise<ResetPasswordResponse> => {
   const response = await api.post<ApiResponse<ResetPasswordResponse>>(
-    '/web/auth/reset-password',
+    "/web/auth/reset-password",
     data,
     {
       headers: {
@@ -127,4 +130,3 @@ export const resetPassword = async (
   );
   return response.data.data!;
 };
-

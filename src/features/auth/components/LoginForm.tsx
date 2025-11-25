@@ -1,5 +1,5 @@
 import { useForm } from 'react-hook-form';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { login } from '../api/authApi';
@@ -21,6 +21,7 @@ const GOOGLE_AUTH_URL = `https://accounts.google.com/o/oauth2/v2/auth?client_id=
 export const LoginForm = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
   
   const {
     register,
@@ -31,10 +32,16 @@ export const LoginForm = () => {
   const loginMutation = useMutation({
     mutationFn: login,
     onSuccess: (data) => {
+      queryClient.removeQueries({ queryKey: ['account', 'self'], exact: false });
       // Save tokens to Redux and localStorage
       dispatch(setCredentials({
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
+        user: {
+          id: data.accountId,
+          email: data.email,
+          isSuperAdmin: data.isSuperAdmin,
+        },
       }));
       
       // Navigate to dashboard

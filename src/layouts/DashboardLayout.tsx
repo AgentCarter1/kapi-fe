@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Settings, Menu } from 'lucide-react';
-import { Sidebar } from '../components/Sidebar';
-import { WorkspaceSelector } from '../components/WorkspaceSelector';
-import { ProfileDropdown } from '../components/ProfileDropdown';
-import { ThemeToggleButton } from '../components/ThemeToggleButton';
-import WorkspaceManagementDialog from '../features/workspace/components/WorkspaceManagementDialog';
-import { SidebarProvider, useSidebar } from '../context/SidebarContext';
-import { getAccountSelf } from '../features/account/api/accountApi';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setUser } from '../store/slices/authSlice';
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Settings, Menu } from "lucide-react";
+import { Sidebar } from "../components/Sidebar";
+import { WorkspaceSelector } from "../components/WorkspaceSelector";
+import { ProfileDropdown } from "../components/ProfileDropdown";
+import { ThemeToggleButton } from "../components/ThemeToggleButton";
+import WorkspaceManagementDialog from "../features/workspace/components/WorkspaceManagementDialog";
+import { SidebarProvider, useSidebar } from "../context/SidebarContext";
+import { getAccountSelf } from "../features/account/api/accountApi";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { setUser } from "../store/slices/authSlice";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -18,35 +18,51 @@ interface DashboardLayoutProps {
 const LayoutContent: React.FC<DashboardLayoutProps> = ({ children }) => {
   const dispatch = useAppDispatch();
   const currentUser = useAppSelector((state) => state.auth.user);
-  const [isWorkspaceManagementOpen, setIsWorkspaceManagementOpen] = useState(false);
+  const [isWorkspaceManagementOpen, setIsWorkspaceManagementOpen] =
+    useState(false);
   const { isExpanded, isHovered, toggleMobile } = useSidebar();
 
-  // Fetch user profile if not already loaded
+  // Fetch user profile
   const { data: accountData } = useQuery({
-    queryKey: ['account', 'self'],
+    queryKey: ["account", "self"],
     queryFn: getAccountSelf,
-    enabled: !currentUser, // Only fetch if user is not in Redux
     staleTime: 1000 * 60 * 10, // 10 minutes
+    refetchOnWindowFocus: false,
   });
 
   // Update Redux state when user data is fetched
   useEffect(() => {
-    if (accountData && !currentUser) {
-      dispatch(setUser({
-        id: accountData.id,
-        email: accountData.email,
-        firstName: accountData.parameters?.firstName || '',
-        lastName: accountData.parameters?.lastName || '',
-        isActive: accountData.isActive ?? false,
-        verifiedAt: accountData.verifiedAt,
-      }));
+    if (!accountData) return;
+
+    const nextUser = {
+      id: accountData.id,
+      email: accountData.email,
+      firstName: accountData.parameters?.firstName || "",
+      lastName: accountData.parameters?.lastName || "",
+      isActive: accountData.isActive ?? false,
+      verifiedAt: accountData.verifiedAt,
+      isSuperAdmin: accountData.isSuperAdmin ?? false,
+    };
+
+    const shouldUpdate =
+      !currentUser ||
+      currentUser.id !== nextUser.id ||
+      currentUser.email !== nextUser.email ||
+      (currentUser.firstName || "") !== nextUser.firstName ||
+      (currentUser.lastName || "") !== nextUser.lastName ||
+      (currentUser.isActive ?? false) !== (nextUser.isActive ?? false) ||
+      (currentUser.verifiedAt ?? null) !== (nextUser.verifiedAt ?? null) ||
+      Boolean(currentUser.isSuperAdmin) !== Boolean(nextUser.isSuperAdmin);
+
+    if (shouldUpdate) {
+      dispatch(setUser(nextUser));
     }
   }, [accountData, currentUser, dispatch]);
 
   return (
     <div className="min-h-screen xl:flex">
       <Sidebar />
-      
+
       {/* Workspace Management Dialog */}
       <WorkspaceManagementDialog
         isOpen={isWorkspaceManagementOpen}
@@ -55,7 +71,7 @@ const LayoutContent: React.FC<DashboardLayoutProps> = ({ children }) => {
 
       <div
         className={`flex-1 transition-all duration-300 ease-in-out ${
-          isExpanded || isHovered ? 'lg:ml-[290px]' : 'lg:ml-[90px]'
+          isExpanded || isHovered ? "lg:ml-[290px]" : "lg:ml-[90px]"
         }`}
       >
         {/* Top Header */}
@@ -92,17 +108,20 @@ const LayoutContent: React.FC<DashboardLayoutProps> = ({ children }) => {
         </header>
 
         {/* Main Content */}
-        <main className="p-4 mx-auto max-w-screen-2xl md:p-6 bg-gray-50 dark:bg-gray-950 min-h-screen">{children}</main>
+        <main className="p-4 mx-auto max-w-screen-2xl md:p-6 bg-gray-50 dark:bg-gray-950 min-h-screen">
+          {children}
+        </main>
       </div>
     </div>
   );
 };
 
-export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
+  children,
+}) => {
   return (
     <SidebarProvider>
       <LayoutContent>{children}</LayoutContent>
     </SidebarProvider>
   );
 };
-

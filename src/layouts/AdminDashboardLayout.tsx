@@ -1,104 +1,121 @@
-import { useState, useRef, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Users, 
-  Cpu, 
-  Building2, 
-  Key, 
-  LogOut,
-  Menu,
-  X,
-} from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { logout as logoutAction } from '../store/slices/authSlice';
-import { logout } from '../features/auth/api/authApi';
-import { useQuery } from '@tanstack/react-query';
-import { getAccountSelf } from '../features/account/api/accountApi';
-import { setUser } from '../store/slices/authSlice';
-import toast from 'react-hot-toast';
+import { useState, useRef, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Users, Cpu, Building2, Key, LogOut, Menu, X } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { logout as logoutAction } from "../store/slices/authSlice";
+import { logout } from "../features/auth/api/authApi";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getAccountSelf } from "../features/account/api/accountApi";
+import { setUser } from "../store/slices/authSlice";
+import toast from "react-hot-toast";
 
 interface AdminDashboardLayoutProps {
   children: React.ReactNode;
 }
 
 const menuItems = [
-  { path: '/admin/dashboard', label: 'Dashboard', icon: Building2 },
-  { path: '/admin/accounts', label: 'Accounts', icon: Users },
-  { path: '/admin/devices', label: 'Devices', icon: Cpu },
-  { path: '/admin/workspaces', label: 'Workspaces', icon: Building2 },
-  { path: '/admin/licenses', label: 'Licenses', icon: Key },
+  { path: "/admin/dashboard", label: "Dashboard", icon: Building2 },
+  { path: "/admin/accounts", label: "Accounts", icon: Users },
+  { path: "/admin/devices", label: "Devices", icon: Cpu },
+  { path: "/admin/workspaces", label: "Workspaces", icon: Building2 },
+  { path: "/admin/licenses", label: "Licenses", icon: Key },
 ];
 
-export const AdminDashboardLayout = ({ children }: AdminDashboardLayoutProps) => {
+export const AdminDashboardLayout = ({
+  children,
+}: AdminDashboardLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
-  
+  const queryClient = useQueryClient();
   const currentUser = useAppSelector((state) => state.auth.user);
+  const isSuperAdmin = currentUser?.isSuperAdmin ?? false;
 
-  // Fetch user profile if not already loaded
+  // Fetch user profile
   const { data: accountData } = useQuery({
-    queryKey: ['account', 'self'],
+    queryKey: ["account", "self"],
     queryFn: getAccountSelf,
-    enabled: !currentUser,
     staleTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
   });
 
   // Update Redux state when user data is fetched
   useEffect(() => {
-    if (accountData && !currentUser) {
-      dispatch(setUser({
-        id: accountData.id,
-        email: accountData.email,
-        firstName: accountData.parameters?.firstName || '',
-        lastName: accountData.parameters?.lastName || '',
-        isActive: accountData.isActive ?? false,
-        verifiedAt: accountData.verifiedAt,
-      }));
+    if (!accountData) return;
+
+    const nextUser = {
+      id: accountData.id,
+      email: accountData.email,
+      firstName: accountData.parameters?.firstName || "",
+      lastName: accountData.parameters?.lastName || "",
+      isActive: accountData.isActive ?? false,
+      verifiedAt: accountData.verifiedAt,
+      isSuperAdmin: accountData.isSuperAdmin ?? false,
+    };
+
+    const shouldUpdate =
+      !currentUser ||
+      currentUser.id !== nextUser.id ||
+      currentUser.email !== nextUser.email ||
+      (currentUser.firstName || "") !== nextUser.firstName ||
+      (currentUser.lastName || "") !== nextUser.lastName ||
+      (currentUser.isActive ?? false) !== (nextUser.isActive ?? false) ||
+      (currentUser.verifiedAt ?? null) !== (nextUser.verifiedAt ?? null) ||
+      Boolean(currentUser.isSuperAdmin) !== Boolean(nextUser.isSuperAdmin);
+
+    if (shouldUpdate) {
+      dispatch(setUser(nextUser));
     }
   }, [accountData, currentUser, dispatch]);
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target as Node)
+      ) {
         setProfileDropdownOpen(false);
       }
     };
 
     if (profileDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [profileDropdownOpen]);
 
   const handleLogout = async () => {
     try {
       await logout();
+      queryClient.clear();
       dispatch(logoutAction());
-      navigate('/auth/admin/login');
-      toast.success('Logged out successfully');
+      navigate("/auth/login");
+      toast.success("Logged out successfully");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Logout failed');
+      toast.error(error.response?.data?.message || "Logout failed");
       // Still logout even if API call fails
+      queryClient.clear();
       dispatch(logoutAction());
-      navigate('/auth/admin/login');
+      navigate("/auth/login");
     }
   };
 
-  const userEmail = currentUser?.email || 'Admin';
-  const userName = currentUser?.firstName || currentUser?.lastName
-    ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim()
-    : userEmail;
+  const userEmail = currentUser?.email || "Admin";
 
   const getInitials = (email: string) => {
     return email.charAt(0).toUpperCase();
+  };
+
+  const handleGoToAccountPanel = () => {
+    setProfileDropdownOpen(false);
+    navigate("/dashboard");
   };
 
   return (
@@ -114,7 +131,7 @@ export const AdminDashboardLayout = ({ children }: AdminDashboardLayoutProps) =>
       {/* Sidebar */}
       <div
         className={`fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex flex-col h-full">
@@ -141,8 +158,8 @@ export const AdminDashboardLayout = ({ children }: AdminDashboardLayoutProps) =>
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-indigo-50 text-indigo-700'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? "bg-indigo-50 text-indigo-700"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
                   <Icon className="mr-3 h-5 w-5" />
@@ -151,7 +168,6 @@ export const AdminDashboardLayout = ({ children }: AdminDashboardLayoutProps) =>
               );
             })}
           </nav>
-
         </div>
       </div>
 
@@ -166,7 +182,7 @@ export const AdminDashboardLayout = ({ children }: AdminDashboardLayoutProps) =>
             <Menu className="h-6 w-6" />
           </button>
           <div className="flex-1" />
-          
+
           {/* Profile Dropdown */}
           <div className="relative" ref={profileDropdownRef}>
             <button
@@ -177,12 +193,19 @@ export const AdminDashboardLayout = ({ children }: AdminDashboardLayoutProps) =>
                 {getInitials(userEmail)}
               </div>
               <svg
-                className={`h-4 w-4 text-gray-500 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`}
+                className={`h-4 w-4 text-gray-500 transition-transform ${
+                  profileDropdownOpen ? "rotate-180" : ""
+                }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </button>
 
@@ -196,6 +219,18 @@ export const AdminDashboardLayout = ({ children }: AdminDashboardLayoutProps) =>
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">Admin Account</p>
                 </div>
+
+                {isSuperAdmin && (
+                  <div className="py-1">
+                    <button
+                      onClick={handleGoToAccountPanel}
+                      className="w-full flex items-center px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 transition-colors"
+                    >
+                      <Building2 className="h-4 w-4 mr-3 text-indigo-600" />
+                      Account Panel
+                    </button>
+                  </div>
+                )}
 
                 {/* Logout */}
                 <div className="border-t border-gray-200 py-1">
@@ -218,4 +253,3 @@ export const AdminDashboardLayout = ({ children }: AdminDashboardLayoutProps) =>
     </div>
   );
 };
-

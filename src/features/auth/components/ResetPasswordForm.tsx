@@ -3,9 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { resetPassword } from '../api/authApi';
-import { useAppDispatch } from '../../../store/hooks';
-import { setCredentials } from '../../../store/slices/authSlice';
-import type { ResetPasswordRequest, LoginResponse } from '../../../types';
+import type { ResetPasswordRequest } from '../../../types';
 
 interface LocationState {
   forgotPasswordToken?: string;
@@ -14,7 +12,6 @@ interface LocationState {
 export const ResetPasswordForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const dispatch = useAppDispatch();
   const state = location.state as LocationState;
   const forgotPasswordToken = state?.forgotPasswordToken || '';
   

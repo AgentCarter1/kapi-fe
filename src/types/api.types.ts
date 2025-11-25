@@ -32,6 +32,9 @@ export interface SignUpRequest {
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
+  accountId: string;
+  email: string;
+  isSuperAdmin: boolean;
 }
 
 export interface SignUpResponse {
@@ -46,6 +49,9 @@ export interface VerifyAccountResponse {
   message: string;
   accessToken: string;
   refreshToken: string;
+  accountId: string;
+  email: string;
+  isSuperAdmin: boolean;
 }
 
 export interface ForgotPasswordRequest {
@@ -75,28 +81,16 @@ export interface ResetPasswordResponse {
 }
 
 /**
- * Admin Related Types
- */
-export interface AdminLoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface AdminLoginResponse {
-  accessToken: string;
-  refreshToken: string;
-}
-
-/**
  * User Related Types
  */
 export interface User {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  isActive: boolean;
-  verifiedAt: Date | null;
+  firstName?: string;
+  lastName?: string;
+  isActive?: boolean;
+  verifiedAt?: Date | null;
+  isSuperAdmin?: boolean;
 }
 
 /**
@@ -143,6 +137,7 @@ export interface AccountSelfResponse {
   defaultWorkspaceId: string | null;
   verifiedAt: Date | null;
   isActive: boolean | null;
+  isSuperAdmin?: boolean;
   parameters: {
     firstName?: string;
     lastName?: string;

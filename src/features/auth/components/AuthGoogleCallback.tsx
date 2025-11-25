@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { exchangeGoogleCode } from '../../../api/endpoints/socialAuth';
 import { useAppDispatch } from '../../../store/hooks';
@@ -9,6 +10,7 @@ export const AuthGoogleCallback = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
   const didRunRef = useRef(false);
 
   useEffect(() => {
@@ -35,7 +37,16 @@ export const AuthGoogleCallback = () => {
       try {
         const verifier = sessionStorage.getItem('google_pkce_verifier') || undefined;
         const tokens = await exchangeGoogleCode(code, verifier);
-        dispatch(setCredentials(tokens));
+        queryClient.removeQueries({ queryKey: ['account', 'self'], exact: false });
+        dispatch(setCredentials({
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          user: {
+            id: tokens.accountId,
+            email: tokens.email,
+            isSuperAdmin: tokens.isSuperAdmin,
+          },
+        }));
         toast.success('Signed in with Google ✨');
         // Set guard to avoid double-submit
         sessionStorage.setItem(guardKey, '1');
