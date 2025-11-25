@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useAdminAccounts, useAdminEmails, useAdminWorkspacesList } from '../api/adminApi';
 import { MultiSelectDropdown } from '../components/MultiSelectDropdown';
@@ -15,11 +15,16 @@ const ACCOUNT_TYPE_NAMES: Record<string, string> = {
   '2': 'Credential Code',
 };
 
+type AccountTypeTab = 'all' | 'regular' | 'credential_code' | 'super_admin';
+
 export const AdminAccountsPage = () => {
   const [filters, setFilters] = useState<GetAdminAccountsFilters>({
     page: 1,
     limit: 10,
   });
+
+  // Active tab state
+  const [activeTab, setActiveTab] = useState<AccountTypeTab>('all');
 
   // Email and workspace search states
   const [emailSearch, setEmailSearch] = useState('');
@@ -28,6 +33,19 @@ export const AdminAccountsPage = () => {
   const { data, isLoading } = useAdminAccounts(filters);
   const { data: emailsData, isLoading: emailsLoading } = useAdminEmails(emailSearch);
   const { data: workspacesListData, isLoading: workspacesListLoading } = useAdminWorkspacesList(workspaceSearch);
+
+  // Sync activeTab with filters.accountTypeId and filters.isSuperAdmin
+  useEffect(() => {
+    if (filters.isSuperAdmin === true && !filters.accountTypeId) {
+      setActiveTab('super_admin');
+    } else if (filters.accountTypeId === AccountType.REGULAR && filters.isSuperAdmin !== true) {
+      setActiveTab('regular');
+    } else if (filters.accountTypeId === AccountType.CREDENTIAL_CODE && filters.isSuperAdmin !== true) {
+      setActiveTab('credential_code');
+    } else if (!filters.accountTypeId && filters.isSuperAdmin !== true) {
+      setActiveTab('all');
+    }
+  }, [filters.accountTypeId, filters.isSuperAdmin]);
 
   // Parse selected emails and workspaces from comma-separated strings
   const selectedEmails = useMemo(() => {
@@ -62,22 +80,28 @@ export const AdminAccountsPage = () => {
     }));
   };
 
-  const handleAccountTypeChange = (accountTypeId: string) => {
-    setFilters((prev) => ({ ...prev, accountTypeId: accountTypeId || undefined, page: 1 }));
+  const handleTabChange = (tab: AccountTypeTab) => {
+    setActiveTab(tab);
+    setFilters((prev) => {
+      let accountTypeId: string | undefined = undefined;
+      let isSuperAdmin: boolean | undefined = undefined;
+      
+      if (tab === 'regular') {
+        accountTypeId = AccountType.REGULAR;
+      } else if (tab === 'credential_code') {
+        accountTypeId = AccountType.CREDENTIAL_CODE;
+      } else if (tab === 'super_admin') {
+        isSuperAdmin = true;
+      }
+      
+      return { ...prev, accountTypeId, isSuperAdmin, page: 1 };
+    });
   };
 
   const handleStatusChange = (isActive: string) => {
     setFilters((prev) => ({
       ...prev,
       isActive: isActive === 'all' ? undefined : isActive === 'active',
-      page: 1,
-    }));
-  };
-
-  const handleSuperAdminChange = (isSuperAdmin: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      isSuperAdmin: isSuperAdmin === 'all' ? undefined : isSuperAdmin === 'true',
       page: 1,
     }));
   };
@@ -92,6 +116,7 @@ export const AdminAccountsPage = () => {
 
   const clearFilters = () => {
     setFilters({ page: 1, limit: 10 });
+    setActiveTab('all');
     setEmailSearch('');
     setWorkspaceSearch('');
   };
@@ -116,6 +141,66 @@ export const AdminAccountsPage = () => {
       <div className="mb-6">
         <h2 className="text-3xl font-bold text-gray-900">Accounts</h2>
         <p className="text-gray-600 mt-1">Manage all user accounts</p>
+      </div>
+
+      {/* Account Type Tabs */}
+      <div className="mb-6 bg-white rounded-lg shadow">
+        <div className="border-b border-gray-200">
+          <nav className="flex -mb-px" aria-label="Tabs">
+            <button
+              onClick={() => handleTabChange('all')}
+              className={`
+                flex-1 py-4 px-6 text-center border-b-2 font-medium text-sm transition-colors
+                ${
+                  activeTab === 'all'
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }
+              `}
+            >
+              All
+            </button>
+            <button
+              onClick={() => handleTabChange('regular')}
+              className={`
+                flex-1 py-4 px-6 text-center border-b-2 font-medium text-sm transition-colors
+                ${
+                  activeTab === 'regular'
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }
+              `}
+            >
+              Regular
+            </button>
+            <button
+              onClick={() => handleTabChange('credential_code')}
+              className={`
+                flex-1 py-4 px-6 text-center border-b-2 font-medium text-sm transition-colors
+                ${
+                  activeTab === 'credential_code'
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }
+              `}
+            >
+              Credential Code
+            </button>
+            <button
+              onClick={() => handleTabChange('super_admin')}
+              className={`
+                flex-1 py-4 px-6 text-center border-b-2 font-medium text-sm transition-colors
+                ${
+                  activeTab === 'super_admin'
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }
+              `}
+            >
+              Super Admin
+            </button>
+          </nav>
+        </div>
       </div>
 
       {/* Filters */}
@@ -151,23 +236,6 @@ export const AdminAccountsPage = () => {
             />
           </div>
 
-          {/* Account Type */}
-          <div className="w-full">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
-            <select
-              value={filters.accountTypeId || ''}
-              onChange={(e) => handleAccountTypeChange(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            >
-              <option value="">All Types</option>
-              {Object.entries(AccountType).map(([key, value]) => (
-                <option key={value} value={value}>
-                  {ACCOUNT_TYPE_NAMES[value] || key}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Status */}
           <div className="w-full">
             <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -185,26 +253,6 @@ export const AdminAccountsPage = () => {
               <option value="all">All</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-            </select>
-          </div>
-
-          {/* Super Admin */}
-          <div className="w-full">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Super Admin</label>
-            <select
-              value={
-                filters.isSuperAdmin === undefined
-                  ? 'all'
-                  : filters.isSuperAdmin
-                  ? 'true'
-                  : 'false'
-              }
-              onChange={(e) => handleSuperAdminChange(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            >
-              <option value="all">All</option>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
             </select>
           </div>
 

@@ -63,8 +63,13 @@ export const getAdminAccounts = async (
     if (filters.search && filters.search.trim()) cleanParams.search = filters.search;
     if (filters.email && filters.email.trim()) cleanParams.email = filters.email;
     if (filters.accountTypeId && filters.accountTypeId.trim()) cleanParams.accountTypeId = filters.accountTypeId;
-    if (filters.isActive !== undefined) cleanParams.isActive = filters.isActive;
-    if (filters.isSuperAdmin !== undefined) cleanParams.isSuperAdmin = filters.isSuperAdmin;
+    // Explicitly convert boolean to string for query params (Axios converts it anyway, but being explicit)
+    if (filters.isActive !== undefined && filters.isActive !== null) {
+      cleanParams.isActive = filters.isActive.toString();
+    }
+    if (filters.isSuperAdmin !== undefined && filters.isSuperAdmin !== null) {
+      cleanParams.isSuperAdmin = filters.isSuperAdmin.toString();
+    }
     if (filters.workspaceId && filters.workspaceId.trim()) cleanParams.workspaceId = filters.workspaceId;
   }
 
@@ -263,7 +268,10 @@ export const getAdminWorkspaces = async (
     if (filters.page) cleanParams.page = filters.page;
     if (filters.limit) cleanParams.limit = filters.limit;
     if (filters.search && filters.search.trim()) cleanParams.search = filters.search;
-    if (filters.isActive !== undefined) cleanParams.isActive = filters.isActive;
+    // Explicitly convert boolean to string for query params
+    if (filters.isActive !== undefined && filters.isActive !== null) {
+      cleanParams.isActive = filters.isActive.toString();
+    }
   }
 
   const response = await api.get<ApiResponse<AdminWorkspacesResponse['data']>>('/admin/workspaces', {
