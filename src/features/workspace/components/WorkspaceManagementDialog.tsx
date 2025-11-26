@@ -103,12 +103,13 @@ const WorkspaceItemComponent: React.FC<WorkspaceItemProps> = ({
   const isAccessAvailable = isWorkspaceAccessAvailable(workspace);
   const countdown = useCountdown(workspace.accessStartDate);
   const isDisabled = !isAccessAvailable && workspace.accessStartDate && countdown !== null;
+  const isPassive = workspace.status === 'PASSIVE';
   return (
     <div
       className={`border rounded-xl p-5 transition-all ${
         workspace.isDefault
           ? "border-brand-300 dark:border-brand-700 bg-gradient-to-br from-brand-50 to-brand-100 dark:from-brand-950/50 dark:to-brand-900/30 shadow-lg"
-          : isDisabled
+          : isDisabled || isPassive
           ? "border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 opacity-75"
           : "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:shadow-lg hover:border-brand-200 dark:hover:border-brand-800"
       }`}
@@ -150,6 +151,8 @@ const WorkspaceItemComponent: React.FC<WorkspaceItemProps> = ({
                 className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${
                   workspace.status === "ACTIVE"
                     ? "bg-success-100 text-success-800 dark:bg-success-950 dark:text-success-400 border-success-200 dark:border-success-900"
+                    : workspace.status === "PASSIVE"
+                    ? "bg-warning-100 text-warning-800 dark:bg-warning-950 dark:text-warning-400 border-warning-200 dark:border-warning-900"
                     : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700"
                 }`}
               >
@@ -157,6 +160,15 @@ const WorkspaceItemComponent: React.FC<WorkspaceItemProps> = ({
               </span>
             </div>
           </div>
+          
+          {/* Passive Status Warning */}
+          {workspace.status === "PASSIVE" && (
+            <div className="mt-2 flex items-center gap-1.5 p-2 bg-warning-50 dark:bg-warning-950/30 border border-warning-200 dark:border-warning-900 rounded-lg">
+              <span className="text-xs font-medium text-warning-700 dark:text-warning-400">
+                ⚠️ Bu workspace'de pasif durumdasınız. İşlem yapamazsınız.
+              </span>
+            </div>
+          )}
           
           {/* Access Time Information */}
           {isDisabled && countdown !== null && (
@@ -188,9 +200,15 @@ const WorkspaceItemComponent: React.FC<WorkspaceItemProps> = ({
           {!workspace.isDefault && (
             <button
               onClick={() => onSetDefault(workspace)}
-              disabled={setDefaultMutation.isPending || !isAccessAvailable}
+              disabled={setDefaultMutation.isPending || !isAccessAvailable || workspace.status === 'PASSIVE'}
               className="inline-flex items-center px-3 py-2 text-xs font-medium text-brand-700 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-900 rounded-lg hover:bg-brand-100 dark:hover:bg-brand-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              title={!isAccessAvailable ? "Workspace erişimi şu anda mevcut değil" : "Set as default workspace"}
+              title={
+                workspace.status === 'PASSIVE' 
+                  ? "Pasif durumdasınız, işlem yapamazsınız" 
+                  : !isAccessAvailable 
+                  ? "Workspace erişimi şu anda mevcut değil" 
+                  : "Set as default workspace"
+              }
             >
               <Star className="h-4 w-4 mr-1.5" />
               Set Default
@@ -286,6 +304,12 @@ const WorkspaceManagementDialog: React.FC<WorkspaceManagementDialogProps> = ({
   const handleSetDefault = async (
     workspace: Workspace
   ) => {
+    // Check if workspace is PASSIVE
+    if (workspace.status === 'PASSIVE') {
+      toast.error('Bu workspace\'de pasif durumdasınız. İşlem yapamazsınız.');
+      return;
+    }
+
     // Check if workspace access is available
     if (!isWorkspaceAccessAvailable(workspace)) {
       const now = new Date();

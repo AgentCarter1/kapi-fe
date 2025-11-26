@@ -1,17 +1,20 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getWorkspaces } from '../api/endpoints/workspaces';
-import type { Workspace } from '../api/endpoints/workspaces';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setCurrentWorkspace } from '../store/slices/authSlice';
-import { useSetDefaultWorkspace } from '../features/workspace/api/workspaceApi';
-import toast from 'react-hot-toast';
+import React, { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getWorkspaces } from "../api/endpoints/workspaces";
+import type { Workspace } from "../api/endpoints/workspaces";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { setCurrentWorkspace } from "../store/slices/authSlice";
+import toast from "react-hot-toast";
 
 // Helper function to check if workspace access is available
 const isWorkspaceAccessAvailable = (workspace: Workspace): boolean => {
   const now = new Date();
-  const startDate = workspace.accessStartDate ? new Date(workspace.accessStartDate) : null;
-  const endDate = workspace.accessEndDate ? new Date(workspace.accessEndDate) : null;
+  const startDate = workspace.accessStartDate
+    ? new Date(workspace.accessStartDate)
+    : null;
+  const endDate = workspace.accessEndDate
+    ? new Date(workspace.accessEndDate)
+    : null;
 
   if (startDate && now < startDate) {
     return false; // Access hasn't started yet
@@ -36,12 +39,12 @@ const useCountdown = (targetDate: string | null) => {
       const now = new Date();
       const target = new Date(targetDate);
       const diff = target.getTime() - now.getTime();
-      
+
       if (diff <= 0) {
         setTimeLeft(null);
         return;
       }
-      
+
       setTimeLeft(diff);
     };
 
@@ -81,29 +84,38 @@ interface WorkspaceItemProps {
   onSelect: (workspace: Workspace) => void;
 }
 
-const WorkspaceItem: React.FC<WorkspaceItemProps> = ({ workspace, isSelected, isPending, onSelect }) => {
+const WorkspaceItem: React.FC<WorkspaceItemProps> = ({
+  workspace,
+  isSelected,
+  isPending,
+  onSelect,
+}) => {
   const isAccessAvailable = isWorkspaceAccessAvailable(workspace);
   const countdown = useCountdown(workspace.accessStartDate);
-  const isDisabled = !isAccessAvailable && workspace.accessStartDate && countdown !== null;
+  const isDisabled =
+    !isAccessAvailable && workspace.accessStartDate && countdown !== null;
+  const isPassive = workspace.status === "PASSIVE";
 
   return (
     <button
       onClick={() => onSelect(workspace)}
-      disabled={isPending || isDisabled}
+      disabled={isPending || isDisabled || isPassive}
       className={`w-full text-left px-4 py-3 transition-colors ${
         isSelected
-          ? 'bg-blue-50 border-l-4 border-blue-500'
-          : isDisabled
-          ? 'bg-gray-50 opacity-60 cursor-not-allowed'
-          : 'hover:bg-gray-50'
+          ? "bg-blue-50 border-l-4 border-blue-500"
+          : isDisabled || isPassive
+          ? "bg-gray-50 opacity-60 cursor-not-allowed"
+          : "hover:bg-gray-50"
       }`}
     >
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2">
-            <p className={`text-sm font-medium truncate ${
-              isDisabled ? 'text-gray-500' : 'text-gray-900'
-            }`}>
+            <p
+              className={`text-sm font-medium truncate ${
+                isDisabled || isPassive ? "text-gray-500" : "text-gray-900"
+              }`}
+            >
               {workspace.workspaceName}
             </p>
             {workspace.isDefault && (
@@ -111,18 +123,30 @@ const WorkspaceItem: React.FC<WorkspaceItemProps> = ({ workspace, isSelected, is
                 Default
               </span>
             )}
+            {isPassive && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800 border border-warning-200">
+                Pasif
+              </span>
+            )}
           </div>
           <p className="text-xs text-gray-500 mt-1">{workspace.accountType}</p>
+          {isPassive && (
+            <p className="text-xs text-warning-600 mt-1 font-medium">
+              ⚠️ Bu workspace'de pasif durumdasınız. İşlem yapamazsınız.
+            </p>
+          )}
           {isDisabled && countdown !== null && (
             <p className="text-xs text-orange-600 mt-1 font-medium">
               ⏳ Erişim {formatCountdown(countdown)} sonra başlayacak
             </p>
           )}
-          {!isAccessAvailable && workspace.accessEndDate && new Date() > new Date(workspace.accessEndDate) && (
-            <p className="text-xs text-red-600 mt-1 font-medium">
-              ❌ Erişim süresi doldu
-            </p>
-          )}
+          {!isAccessAvailable &&
+            workspace.accessEndDate &&
+            new Date() > new Date(workspace.accessEndDate) && (
+              <p className="text-xs text-red-600 mt-1 font-medium">
+                ❌ Erişim süresi doldu
+              </p>
+            )}
         </div>
         {isSelected && (
           <svg
@@ -146,62 +170,127 @@ export const WorkspaceSelector: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dispatch = useAppDispatch();
-  const currentWorkspace = useAppSelector((state) => state.auth.currentWorkspace);
-  const setDefaultWorkspaceMutation = useSetDefaultWorkspace();
+  const currentWorkspace = useAppSelector(
+    (state) => state.auth.currentWorkspace
+  );
+  // NOTE: We no longer change default workspace on simple selection.
+  // Default workspace is managed explicitly from Workspace Management dialog
+  // and in special backend-driven flows (e.g. when default workspace becomes passive).
+  // const setDefaultWorkspaceMutation = useSetDefaultWorkspace();
 
   const { data: workspaces, isLoading } = useQuery({
-    queryKey: ['account-workspaces'],
+    queryKey: ["account-workspaces"],
     queryFn: getWorkspaces,
   });
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Set default workspace on initial load
+  // Set default workspace on initial load - only ACTIVE workspaces
+  // IMPORTANT: This only sets current workspace, does NOT change default workspace
   useEffect(() => {
     if (workspaces && workspaces.length > 0 && !currentWorkspace) {
-      const defaultWorkspace = workspaces.find((w) => w.isDefault) || workspaces[0];
-      dispatch(setCurrentWorkspace(defaultWorkspace));
+      // Step 1: Check if default workspace is ACTIVE
+      const defaultWorkspace = workspaces.find((w) => w.isDefault);
+
+      if (defaultWorkspace && defaultWorkspace.status === "ACTIVE") {
+        // Default workspace is ACTIVE - use it (don't change default)
+        dispatch(setCurrentWorkspace(defaultWorkspace));
+      } else if (defaultWorkspace && defaultWorkspace.status === "PASSIVE") {
+        // Step 2: Default workspace is PASSIVE - find primaryOwner's first ACTIVE workspace
+        // But DON'T change default workspace here - only set current workspace
+        const primaryOwnerActiveWorkspace = workspaces.find(
+          (w) => w.status === "ACTIVE" && w.accountType === "primaryOwner"
+        );
+
+        if (primaryOwnerActiveWorkspace) {
+          dispatch(setCurrentWorkspace(primaryOwnerActiveWorkspace));
+        } else {
+          // No primaryOwner ACTIVE workspace - find any ACTIVE workspace
+          const anyActiveWorkspace = workspaces.find(
+            (w) => w.status === "ACTIVE"
+          );
+
+          if (anyActiveWorkspace) {
+            dispatch(setCurrentWorkspace(anyActiveWorkspace));
+          }
+        }
+      } else {
+        // No default workspace - find primaryOwner's first ACTIVE workspace
+        const primaryOwnerActiveWorkspace = workspaces.find(
+          (w) => w.status === "ACTIVE" && w.accountType === "primaryOwner"
+        );
+
+        if (primaryOwnerActiveWorkspace) {
+          dispatch(setCurrentWorkspace(primaryOwnerActiveWorkspace));
+        } else {
+          // No primaryOwner ACTIVE workspace - find any ACTIVE workspace
+          const anyActiveWorkspace = workspaces.find(
+            (w) => w.status === "ACTIVE"
+          );
+
+          if (anyActiveWorkspace) {
+            dispatch(setCurrentWorkspace(anyActiveWorkspace));
+          }
+        }
+      }
     }
   }, [workspaces, currentWorkspace, dispatch]);
 
   const handleWorkspaceSelect = async (workspace: Workspace) => {
+    // Check if workspace is PASSIVE
+    if (workspace.status === "PASSIVE") {
+      toast.error("Bu workspace'de pasif durumdasınız. İşlem yapamazsınız.");
+      return;
+    }
+
     // Check if workspace access is available
     if (!isWorkspaceAccessAvailable(workspace)) {
       const now = new Date();
-      const startDate = workspace.accessStartDate ? new Date(workspace.accessStartDate) : null;
-      const endDate = workspace.accessEndDate ? new Date(workspace.accessEndDate) : null;
+      const startDate = workspace.accessStartDate
+        ? new Date(workspace.accessStartDate)
+        : null;
+      const endDate = workspace.accessEndDate
+        ? new Date(workspace.accessEndDate)
+        : null;
 
       if (startDate && now < startDate) {
-        toast.error(`Bu workspace'e erişim henüz başlamadı. Erişim ${startDate.toLocaleString('tr-TR')} tarihinde başlayacak.`);
+        toast.error(
+          `Bu workspace'e erişim henüz başlamadı. Erişim ${startDate.toLocaleString(
+            "tr-TR"
+          )} tarihinde başlayacak.`
+        );
       } else if (endDate && now > endDate) {
-        toast.error(`Bu workspace'e erişim süresi doldu. Erişim ${endDate.toLocaleString('tr-TR')} tarihinde sona erdi.`);
+        toast.error(
+          `Bu workspace'e erişim süresi doldu. Erişim ${endDate.toLocaleString(
+            "tr-TR"
+          )} tarihinde sona erdi.`
+        );
       } else {
-        toast.error('Bu workspace\'e şu anda erişim mevcut değil.');
+        toast.error("Bu workspace'e şu anda erişim mevcut değil.");
       }
       return;
     }
 
     try {
-      // Set as default workspace via API
-      await setDefaultWorkspaceMutation.mutateAsync(workspace.workspaceId);
-      
-      // Update Redux state
+      // Only update current workspace in client state; do NOT change default workspace here.
       dispatch(setCurrentWorkspace(workspace));
       setIsOpen(false);
-      toast.success('Workspace seçildi ✨');
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || 'Workspace seçilemedi';
-      toast.error(errorMessage);
+      toast.success("Workspace seçildi ✨");
+    } catch {
+      // No-op: there is no backend call here anymore, so this should not fail
     }
   };
 
@@ -238,17 +327,22 @@ export const WorkspaceSelector: React.FC = () => {
           />
         </svg>
         <span className="max-w-[150px] truncate">
-          {currentWorkspace?.workspaceName || 'Select Workspace'}
+          {currentWorkspace?.workspaceName || "Select Workspace"}
         </span>
         <svg
           className={`w-4 h-4 text-gray-500 transition-transform ${
-            isOpen ? 'transform rotate-180' : ''
+            isOpen ? "transform rotate-180" : ""
           }`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
         </svg>
       </button>
 
@@ -262,8 +356,10 @@ export const WorkspaceSelector: React.FC = () => {
               <WorkspaceItem
                 key={workspace.id}
                 workspace={workspace}
-                isSelected={currentWorkspace?.workspaceId === workspace.workspaceId}
-                isPending={setDefaultWorkspaceMutation.isPending}
+                isSelected={
+                  currentWorkspace?.workspaceId === workspace.workspaceId
+                }
+                isPending={false}
                 onSelect={handleWorkspaceSelect}
               />
             ))}
@@ -273,4 +369,3 @@ export const WorkspaceSelector: React.FC = () => {
     </div>
   );
 };
-

@@ -1,42 +1,42 @@
-import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import { AccountProfile } from './features/account/components/AccountProfile';
-import { AccountInvites } from './features/account/components/AccountInvites';
-import { LoginForm } from './features/auth/components/LoginForm';
-import { SignUpForm } from './features/auth/components/SignUpForm';
-import { VerifyAccountForm } from './features/auth/components/VerifyAccountForm';
-import { ForgotPasswordForm } from './features/auth/components/ForgotPasswordForm';
-import { VerifyForgotPasswordOtpForm } from './features/auth/components/VerifyForgotPasswordOtpForm';
-import { ResetPasswordForm } from './features/auth/components/ResetPasswordForm';
-import { AuthGoogleCallback } from './features/auth/components/AuthGoogleCallback';
-import { AdminDashboardLayout } from './layouts/AdminDashboardLayout';
-import { AdminDashboard } from './features/admin/pages/AdminDashboard';
-import { AdminAccountsPage } from './features/admin/pages/AdminAccountsPage';
-import { AdminDevicesPage } from './features/admin/pages/AdminDevicesPage';
-import { AdminWorkspacesPage } from './features/admin/pages/AdminWorkspacesPage';
-import { AdminLicensesPage } from './features/admin/pages/AdminLicensesPage';
-import { WorkspaceAccountsPage } from './features/workspace/pages/WorkspaceAccountsPage';
-import { WorkspaceInvitationsPage } from './features/workspace/pages/WorkspaceInvitationsPage';
-import { WorkspaceCredentialCodesPage } from './features/workspace/pages/WorkspaceCredentialCodesPage';
-import { WorkspaceAccessHistoryPage } from './features/workspace/pages/WorkspaceAccessHistoryPage';
-import { WorkspaceLicensePage } from './features/workspace/pages/WorkspaceLicensePage';
-import { WorkspaceAntiPassbacksPage } from './features/anti-passback/pages/WorkspaceAntiPassbacksPage';
-import { Zones } from './features/zone/pages/Zones';
-import { Devices } from './features/device/pages/Devices';
-import { Building } from './features/building/pages/Building';
-import { DashboardLayout } from './layouts/DashboardLayout';
-import { useAppSelector, useAppDispatch } from './store/hooks';
-import { setCredentials } from './store/slices/authSlice';
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster, ToastBar, toast, useToasterStore } from "react-hot-toast";
+import { AccountProfile } from "./features/account/components/AccountProfile";
+import { AccountInvites } from "./features/account/components/AccountInvites";
+import { LoginForm } from "./features/auth/components/LoginForm";
+import { SignUpForm } from "./features/auth/components/SignUpForm";
+import { VerifyAccountForm } from "./features/auth/components/VerifyAccountForm";
+import { ForgotPasswordForm } from "./features/auth/components/ForgotPasswordForm";
+import { VerifyForgotPasswordOtpForm } from "./features/auth/components/VerifyForgotPasswordOtpForm";
+import { ResetPasswordForm } from "./features/auth/components/ResetPasswordForm";
+import { AuthGoogleCallback } from "./features/auth/components/AuthGoogleCallback";
+import { AdminDashboardLayout } from "./layouts/AdminDashboardLayout";
+import { AdminDashboard } from "./features/admin/pages/AdminDashboard";
+import { AdminAccountsPage } from "./features/admin/pages/AdminAccountsPage";
+import { AdminDevicesPage } from "./features/admin/pages/AdminDevicesPage";
+import { AdminWorkspacesPage } from "./features/admin/pages/AdminWorkspacesPage";
+import { AdminLicensesPage } from "./features/admin/pages/AdminLicensesPage";
+import { WorkspaceAccountsPage } from "./features/workspace/pages/WorkspaceAccountsPage";
+import { WorkspaceInvitationsPage } from "./features/workspace/pages/WorkspaceInvitationsPage";
+import { WorkspaceCredentialCodesPage } from "./features/workspace/pages/WorkspaceCredentialCodesPage";
+import { WorkspaceAccessHistoryPage } from "./features/workspace/pages/WorkspaceAccessHistoryPage";
+import { WorkspaceLicensePage } from "./features/workspace/pages/WorkspaceLicensePage";
+import { WorkspaceAntiPassbacksPage } from "./features/anti-passback/pages/WorkspaceAntiPassbacksPage";
+import { Zones } from "./features/zone/pages/Zones";
+import { Devices } from "./features/device/pages/Devices";
+import { Building } from "./features/building/pages/Building";
+import { DashboardLayout } from "./layouts/DashboardLayout";
+import { useAppSelector, useAppDispatch } from "./store/hooks";
+import { setCredentials } from "./store/slices/authSlice";
 
 // Protected Route wrappers
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
-  
+
   if (!isAuthenticated) {
     return <Navigate to="/auth/login" replace />;
   }
-  
+
   return <>{children}</>;
 };
 
@@ -70,21 +70,37 @@ const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
 const DashboardHome = () => {
   return (
     <div>
-      <h2 className="text-3xl font-bold text-gray-900 mb-4">Welcome to KAPI!</h2>
+      <h2 className="text-3xl font-bold text-gray-900 mb-4">
+        Welcome to KAPI!
+      </h2>
       <p className="text-gray-600 text-lg">You are successfully logged in.</p>
       <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                <svg
+                  className="h-6 w-6 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
                 </svg>
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Workspace Members</dt>
-                  <dd className="text-lg font-medium text-gray-900">View & Manage</dd>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Workspace Members
+                  </dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    View & Manage
+                  </dd>
                 </dl>
               </div>
             </div>
@@ -98,61 +114,96 @@ const DashboardHome = () => {
 function App() {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const dispatch = useAppDispatch();
-  
+  const { toasts } = useToasterStore();
+
+  // Limit maximum visible toasts to 3 (dismiss oldest first)
+  useEffect(() => {
+    const visibleToasts = toasts.filter((t) => t.visible);
+    const limit = 3;
+
+    if (visibleToasts.length > limit) {
+      visibleToasts
+        .slice(0, visibleToasts.length - limit)
+        .forEach((t) => toast.dismiss(t.id));
+    }
+  }, [toasts]);
+
   // Listen for token refresh events from apiClient interceptor
   useEffect(() => {
-    const handleTokensRefreshed = (event: CustomEvent<{ accessToken: string; refreshToken: string }>) => {
-      dispatch(setCredentials({
-        accessToken: event.detail.accessToken,
-        refreshToken: event.detail.refreshToken,
-      }));
+    const handleTokensRefreshed = (
+      event: CustomEvent<{ accessToken: string; refreshToken: string }>
+    ) => {
+      dispatch(
+        setCredentials({
+          accessToken: event.detail.accessToken,
+          refreshToken: event.detail.refreshToken,
+        })
+      );
     };
 
-    window.addEventListener('tokensRefreshed', handleTokensRefreshed as EventListener);
+    window.addEventListener(
+      "tokensRefreshed",
+      handleTokensRefreshed as EventListener
+    );
 
     return () => {
-      window.removeEventListener('tokensRefreshed', handleTokensRefreshed as EventListener);
+      window.removeEventListener(
+        "tokensRefreshed",
+        handleTokensRefreshed as EventListener
+      );
     };
   }, [dispatch]);
-  
+
   return (
     <BrowserRouter>
       {/* Toast Notifications */}
       <Toaster
-        position="top-right"
+        position="bottom-right"
         toastOptions={{
           duration: 4000,
           style: {
-            background: 'var(--toast-bg)',
-            color: 'var(--toast-color)',
-            border: '1px solid var(--toast-border)',
-            borderRadius: '0.5rem',
-            padding: '12px 16px',
+            background: "var(--toast-bg)",
+            color: "var(--toast-color)",
+            border: "1px solid var(--toast-border)",
+            borderRadius: "0.5rem",
+            padding: "12px 16px",
+            cursor: "pointer",
           },
           success: {
             iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
+              primary: "#10b981",
+              secondary: "#fff",
             },
           },
           error: {
             iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
+              primary: "#ef4444",
+              secondary: "#fff",
             },
           },
         }}
-      />
+      >
+        {(t) => (
+          <ToastBar
+            toast={t}
+            style={{ cursor: "pointer" }}
+            onClick={() => toast.dismiss(t.id)}
+          />
+        )}
+      </Toaster>
       <Routes>
         {/* Auth Routes */}
         <Route path="/auth/login" element={<LoginForm />} />
         <Route path="/auth/sign-up" element={<SignUpForm />} />
         <Route path="/auth/verify" element={<VerifyAccountForm />} />
         <Route path="/auth/forgot-password" element={<ForgotPasswordForm />} />
-        <Route path="/auth/forgot-password/verify-otp" element={<VerifyForgotPasswordOtpForm />} />
+        <Route
+          path="/auth/forgot-password/verify-otp"
+          element={<VerifyForgotPasswordOtpForm />}
+        />
         <Route path="/auth/reset-password" element={<ResetPasswordForm />} />
         <Route path="/auth/google/callback" element={<AuthGoogleCallback />} />
-        
+
         {/* Admin Protected Routes */}
         <Route
           path="/admin/dashboard"
@@ -204,7 +255,7 @@ function App() {
             </SuperAdminRoute>
           }
         />
-        
+
         {/* Protected Routes with Layout */}
         <Route
           path="/dashboard"
@@ -330,28 +381,41 @@ function App() {
           }
         />
         {/* Redirect old routes */}
-        <Route path="/workspace/members" element={<Navigate to="/workspace/accounts/members" replace />} />
-        <Route path="/workspace/invitations" element={<Navigate to="/workspace/accounts/invitations" replace />} />
-        <Route path="/workspace/settings" element={<Navigate to="/workspace/accounts/access-history" replace />} />
-        
-        {/* Redirect root based on auth status */}
-        <Route 
-          path="/" 
-          element={
-            isAuthenticated ? 
-              <Navigate to="/dashboard" replace /> : 
-              <Navigate to="/auth/login" replace />
-          } 
+        <Route
+          path="/workspace/members"
+          element={<Navigate to="/workspace/accounts/members" replace />}
         />
-        
-        {/* Catch all - redirect based on auth status */}
-        <Route 
-          path="*" 
+        <Route
+          path="/workspace/invitations"
+          element={<Navigate to="/workspace/accounts/invitations" replace />}
+        />
+        <Route
+          path="/workspace/settings"
+          element={<Navigate to="/workspace/accounts/access-history" replace />}
+        />
+
+        {/* Redirect root based on auth status */}
+        <Route
+          path="/"
           element={
-            isAuthenticated ? 
-              <Navigate to="/dashboard" replace /> : 
+            isAuthenticated ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
               <Navigate to="/auth/login" replace />
-          } 
+            )
+          }
+        />
+
+        {/* Catch all - redirect based on auth status */}
+        <Route
+          path="*"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Navigate to="/auth/login" replace />
+            )
+          }
         />
       </Routes>
     </BrowserRouter>

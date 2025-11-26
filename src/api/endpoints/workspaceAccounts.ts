@@ -8,9 +8,11 @@ export type WorkspaceAccount = {
   lastName?: string;
   accountType: string;
   status: string;
+  isActive?: boolean;
   startAt?: string | null;
   endAt?: string | null;
   createdAt: string;
+  leftAt?: string | null;
 };
 
 export type WorkspaceAccountsMeta = {
@@ -62,6 +64,26 @@ export const removeAccountFromWorkspace = async (
       'workspace-id': workspaceId,
     },
   });
+};
+
+export const updateAccountWorkspaceStatus = async (
+  workspaceId: string,
+  accountId: string,
+  status: 'ACTIVE' | 'PASSIVE',
+): Promise<{ accountId: string; workspaceId: string; status: string }> => {
+  const response = await api.patch<{
+    success: boolean;
+    data: { accountId: string; workspaceId: string; status: string };
+  }>(
+    `/web/workspace/accounts/${accountId}/status`,
+    { status },
+    {
+      headers: {
+        'workspace-id': workspaceId,
+      },
+    },
+  );
+  return response.data.data!;
 };
 
 export type AccountHistory = {

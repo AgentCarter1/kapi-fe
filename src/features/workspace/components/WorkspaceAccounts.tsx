@@ -1,18 +1,36 @@
-import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
-import { Shield, Plus, Pencil, Trash2, Loader2, MapPin, ChevronDown, UserPlus, History } from 'lucide-react';
-import { getWorkspaceAccounts } from '../../../api/endpoints/workspaceAccounts';
-import type { WorkspaceAccountsFilters } from '../../../api/endpoints/workspaceAccounts';
-import { useAppSelector } from '../../../store/hooks';
-import { ConfirmDialog } from '../../../components/ConfirmDialog';
-import { InviteMemberDialog } from './InviteMemberDialog';
-import MemberHistoryDialog from './MemberHistoryDialog';
-import { useRemoveAccount } from '../api/accountApi';
-import { useWorkspaceLicenseStatus } from '../api/workspaceLicenseApi';
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import {
+  Shield,
+  Plus,
+  Pencil,
+  Trash2,
+  Loader2,
+  MapPin,
+  ChevronDown,
+  UserPlus,
+  History,
+} from "lucide-react";
+import { getWorkspaceAccounts } from "../../../api/endpoints/workspaceAccounts";
+import type {
+  WorkspaceAccountsFilters,
+  WorkspaceAccount,
+} from "../../../api/endpoints/workspaceAccounts";
+import { useAppSelector } from "../../../store/hooks";
+import { ConfirmDialog } from "../../../components/ConfirmDialog";
+import { InviteMemberDialog } from "./InviteMemberDialog";
+import MemberHistoryDialog from "./MemberHistoryDialog";
+import {
+  useRemoveAccount,
+  useUpdateAccountWorkspaceStatus,
+} from "../api/accountApi";
+import { useWorkspaceLicenseStatus } from "../api/workspaceLicenseApi";
 
 export const WorkspaceAccounts = () => {
-  const currentWorkspace = useAppSelector((state) => state.auth.currentWorkspace);
+  const currentWorkspace = useAppSelector(
+    (state) => state.auth.currentWorkspace
+  );
   const currentUser = useAppSelector((state) => state.auth.user);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [historyDialog, setHistoryDialog] = useState<{
@@ -22,9 +40,9 @@ export const WorkspaceAccounts = () => {
     accountEmail: string;
   }>({
     isOpen: false,
-    accountId: '',
-    accountName: '',
-    accountEmail: '',
+    accountId: "",
+    accountName: "",
+    accountEmail: "",
   });
   const [removeConfirm, setRemoveConfirm] = useState<{
     isOpen: boolean;
@@ -32,31 +50,38 @@ export const WorkspaceAccounts = () => {
     email: string;
   }>({
     isOpen: false,
-    accountId: '',
-    email: '',
+    accountId: "",
+    email: "",
   });
 
-  const removeMutation = useRemoveAccount(currentWorkspace?.workspaceId || '');
-  const { data: licenseStatus, isLoading: isLoadingLicenseStatus } = useWorkspaceLicenseStatus(currentWorkspace?.workspaceId || null);
+  const removeMutation = useRemoveAccount(currentWorkspace?.workspaceId || "");
+  const updateStatusMutation = useUpdateAccountWorkspaceStatus(
+    currentWorkspace?.workspaceId || ""
+  );
+  const { data: licenseStatus, isLoading: isLoadingLicenseStatus } =
+    useWorkspaceLicenseStatus(currentWorkspace?.workspaceId || null);
 
   // Check if user limit is reached
   // Button is disabled while loading or if limit is reached
   const isUserLimitReached = licenseStatus?.user.isLimitReached ?? false;
   const isButtonDisabled = isLoadingLicenseStatus || isUserLimitReached;
-  const userLimitMessage = licenseStatus?.user && licenseStatus.user.max !== null && licenseStatus.user.max !== undefined
-    ? `User limit reached (${licenseStatus.user.current}/${licenseStatus.user.max}). Please upgrade your license to invite more members.`
-    : isLoadingLicenseStatus
-    ? 'Loading license status...'
-    : '';
+  const userLimitMessage =
+    licenseStatus?.user &&
+    licenseStatus.user.max !== null &&
+    licenseStatus.user.max !== undefined
+      ? `User limit reached (${licenseStatus.user.current}/${licenseStatus.user.max}). Please upgrade your license to invite more members.`
+      : isLoadingLicenseStatus
+      ? "Loading license status..."
+      : "";
 
   const [filters, setFilters] = useState<WorkspaceAccountsFilters>({
     page: 1,
     limit: 10,
-    status: 'ACTIVE',
+    status: "ACTIVE",
   });
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['workspace-accounts', currentWorkspace?.workspaceId, filters],
+    queryKey: ["workspace-accounts", currentWorkspace?.workspaceId, filters],
     queryFn: () => getWorkspaceAccounts(currentWorkspace!.workspaceId, filters),
     enabled: !!currentWorkspace?.workspaceId,
   });
@@ -64,14 +89,47 @@ export const WorkspaceAccounts = () => {
   // Sort accounts: Current user first, then others
   const sortedAccounts = useMemo(() => {
     if (!data?.items || !currentUser?.email) return data?.items || [];
-    
-    const currentUserAccount = data.items.find((acc) => acc.email === currentUser.email);
-    const otherAccounts = data.items.filter((acc) => acc.email !== currentUser.email);
-    
-    return currentUserAccount 
+
+    const currentUserAccount = data.items.find(
+      (acc) => acc.email === currentUser.email
+    );
+    const otherAccounts = data.items.filter(
+      (acc) => acc.email !== currentUser.email
+    );
+
+    return currentUserAccount
       ? [currentUserAccount, ...otherAccounts]
       : data.items;
   }, [data?.items, currentUser?.email]);
+
+  const getStatusTooltip = (account: WorkspaceAccount): string | undefined => {
+    // Show detailed info for LEFT / REMOVED / OUTDATED statuses
+    if (account.status === "LEFT" || account.status === "REMOVED") {
+      const leftDate = account.endAt || account.leftAt;
+      if (!leftDate) return undefined;
+      const formatted = new Date(leftDate).toLocaleString("tr-TR", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      return `Bu kullanıcı bu workspace'den ${formatted} tarihinde ayrıldı.`;
+    }
+
+    if (account.status === "OUTDATED" && account.endAt) {
+      const formatted = new Date(account.endAt).toLocaleString("tr-TR", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      return `Bu üyeliğin süresi ${formatted} tarihinde doldu.`;
+    }
+
+    return undefined;
+  };
 
   const handlePageChange = (newPage: number) => {
     setFilters((prev) => ({ ...prev, page: newPage }));
@@ -79,13 +137,13 @@ export const WorkspaceAccounts = () => {
 
   const handleSearchChange = (search: string) => {
     const newFilters: WorkspaceAccountsFilters = { ...filters, page: 1 };
-    
+
     if (search.trim()) {
       newFilters.search = search;
     } else {
       delete newFilters.search;
     }
-    
+
     setFilters(newFilters);
   };
 
@@ -97,14 +155,40 @@ export const WorkspaceAccounts = () => {
     const { accountId, email } = removeConfirm;
     if (!accountId) return;
 
-    const toastId = toast.loading('Removing member...');
+    const toastId = toast.loading("Removing member...");
 
     try {
       await removeMutation.mutateAsync(accountId);
       toast.success(`Member ${email} removed successfully`, { id: toastId });
     } catch (error: any) {
-      console.error('Failed to remove member:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to remove member';
+      console.error("Failed to remove member:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to remove member";
+      toast.error(errorMessage, { id: toastId });
+    }
+  };
+
+  const handleToggleStatus = async (
+    accountId: string,
+    currentStatus: string
+  ) => {
+    const toastId = toast.loading("Updating status...");
+
+    try {
+      const newStatus = currentStatus === "ACTIVE" ? "PASSIVE" : "ACTIVE";
+      await updateStatusMutation.mutateAsync({
+        accountId,
+        status: newStatus,
+      });
+      toast.success(`Status updated successfully`, { id: toastId });
+    } catch (error: any) {
+      console.error("Failed to update status:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to update status";
       toast.error(errorMessage, { id: toastId });
     }
   };
@@ -117,9 +201,9 @@ export const WorkspaceAccounts = () => {
   ) => {
     const accountName =
       firstName || lastName
-        ? `${firstName || ''} ${lastName || ''}`.trim()
-        : 'No name';
-    
+        ? `${firstName || ""} ${lastName || ""}`.trim()
+        : "No name";
+
     setHistoryDialog({
       isOpen: true,
       accountId,
@@ -131,7 +215,9 @@ export const WorkspaceAccounts = () => {
   if (!currentWorkspace) {
     return (
       <div className="bg-warning-50 dark:bg-warning-950 border border-warning-200 dark:border-warning-800 rounded-lg p-4">
-        <p className="text-warning-800 dark:text-warning-400">Please select a workspace first.</p>
+        <p className="text-warning-800 dark:text-warning-400">
+          Please select a workspace first.
+        </p>
       </div>
     );
   }
@@ -146,8 +232,8 @@ export const WorkspaceAccounts = () => {
             disabled={isButtonDisabled}
             className={`inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors shadow-theme-xs ${
               isButtonDisabled
-                ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                : 'bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-700'
+                ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                : "bg-brand-500 text-white hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-700"
             }`}
           >
             <UserPlus className="h-5 w-5 mr-2" />
@@ -179,12 +265,12 @@ export const WorkspaceAccounts = () => {
         onClose={() =>
           setHistoryDialog({
             isOpen: false,
-            accountId: '',
-            accountName: '',
-            accountEmail: '',
+            accountId: "",
+            accountName: "",
+            accountEmail: "",
           })
         }
-        workspaceId={currentWorkspace?.workspaceId || ''}
+        workspaceId={currentWorkspace?.workspaceId || ""}
         accountId={historyDialog.accountId}
         accountName={historyDialog.accountName}
         accountEmail={historyDialog.accountEmail}
@@ -200,7 +286,7 @@ export const WorkspaceAccounts = () => {
             <input
               type="text"
               placeholder="Search by email or name..."
-              value={filters.search || ''}
+              value={filters.search || ""}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full h-11 rounded-lg border border-gray-200 bg-white px-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-none focus:ring focus:ring-brand-500/10 dark:border-gray-800 dark:bg-gray-800 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
             />
@@ -210,9 +296,12 @@ export const WorkspaceAccounts = () => {
               Status
             </label>
             <select
-              value={filters.status || ''}
+              value={filters.status || ""}
               onChange={(e) => {
-                const newFilters: WorkspaceAccountsFilters = { ...filters, page: 1 };
+                const newFilters: WorkspaceAccountsFilters = {
+                  ...filters,
+                  page: 1,
+                };
                 if (e.target.value) {
                   newFilters.status = e.target.value;
                 } else {
@@ -235,9 +324,12 @@ export const WorkspaceAccounts = () => {
               Role
             </label>
             <select
-              value={filters.accountType || ''}
+              value={filters.accountType || ""}
               onChange={(e) => {
-                const newFilters: WorkspaceAccountsFilters = { ...filters, page: 1 };
+                const newFilters: WorkspaceAccountsFilters = {
+                  ...filters,
+                  page: 1,
+                };
                 if (e.target.value) {
                   newFilters.accountType = e.target.value;
                 } else {
@@ -285,8 +377,12 @@ export const WorkspaceAccounts = () => {
       {/* Error State */}
       {error && (
         <div className="bg-error-50 dark:bg-error-950 border border-error-200 dark:border-error-800 rounded-lg p-4">
-          <p className="text-error-800 dark:text-error-400 font-medium">Failed to load workspace members.</p>
-          <p className="text-error-600 dark:text-error-500 text-sm mt-1">{error.message}</p>
+          <p className="text-error-800 dark:text-error-400 font-medium">
+            Failed to load workspace members.
+          </p>
+          <p className="text-error-600 dark:text-error-500 text-sm mt-1">
+            {error.message}
+          </p>
         </div>
       )}
 
@@ -350,35 +446,42 @@ export const WorkspaceAccounts = () => {
                   </thead>
                   <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
                     {sortedAccounts.map((account) => {
-                      const isCurrentUser = account.email === currentUser?.email;
+                      const isCurrentUser =
+                        account.email === currentUser?.email;
                       const getRoleBadgeColor = (role: string) => {
-                        if (role === 'primaryOwner') return 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-400 border-purple-200 dark:border-purple-900';
-                        if (role === 'owner') return 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-400 border-blue-200 dark:border-blue-900';
-                        if (role === 'admin') return 'bg-brand-100 text-brand-800 dark:bg-brand-950 dark:text-brand-400 border-brand-200 dark:border-brand-900';
-                        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700';
+                        if (role === "primaryOwner")
+                          return "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-400 border-purple-200 dark:border-purple-900";
+                        if (role === "owner")
+                          return "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-400 border-blue-200 dark:border-blue-900";
+                        if (role === "admin")
+                          return "bg-brand-100 text-brand-800 dark:bg-brand-950 dark:text-brand-400 border-brand-200 dark:border-brand-900";
+                        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700";
                       };
 
                       return (
-                        <tr 
-                          key={account.id} 
+                        <tr
+                          key={account.id}
                           className={`transition-colors ${
-                            isCurrentUser 
-                              ? 'bg-brand-50/50 dark:bg-brand-950/20 hover:bg-brand-50 dark:hover:bg-brand-950/30' 
-                              : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                            isCurrentUser
+                              ? "bg-brand-50/50 dark:bg-brand-950/20 hover:bg-brand-50 dark:hover:bg-brand-950/30"
+                              : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
                           }`}
                         >
                           <td className="px-6 py-4">
                             <div className="flex items-center">
                               <div className="flex-shrink-0 h-10 w-10">
                                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 dark:from-brand-600 dark:to-brand-700 flex items-center justify-center text-white font-semibold text-sm shadow-theme-xs">
-                                  {account.firstName?.[0]?.toUpperCase() || account.email[0].toUpperCase()}
+                                  {account.firstName?.[0]?.toUpperCase() ||
+                                    account.email[0].toUpperCase()}
                                 </div>
                               </div>
                               <div className="ml-4">
                                 <div className="text-sm font-semibold text-gray-800 dark:text-white/90 flex items-center gap-2">
                                   {account.firstName || account.lastName
-                                    ? `${account.firstName || ''} ${account.lastName || ''}`.trim()
-                                    : 'No name'}
+                                    ? `${account.firstName || ""} ${
+                                        account.lastName || ""
+                                      }`.trim()
+                                    : "No name"}
                                   {isCurrentUser && (
                                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-100 dark:bg-brand-950 text-brand-800 dark:text-brand-400 border border-brand-200 dark:border-brand-900">
                                       You
@@ -389,61 +492,123 @@ export const WorkspaceAccounts = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="text-sm text-gray-600 dark:text-gray-400">{account.email}</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              {account.email}
+                            </div>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeColor(account.accountType)}`}>
+                            <span
+                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${getRoleBadgeColor(
+                                account.accountType
+                              )}`}
+                            >
                               {account.accountType}
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
-                                account.status === 'ACTIVE'
-                                  ? 'bg-success-100 text-success-800 dark:bg-success-950 dark:text-success-400 border-success-200 dark:border-success-900'
-                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700'
-                              }`}
-                            >
-                              {account.status}
-                            </span>
+                            <div className="flex items-center gap-3">
+                              {/* Toggle Switch - show only for ACTIVE and PASSIVE */}
+                              {(account.status === "ACTIVE" ||
+                                account.status === "PASSIVE") && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleToggleStatus(
+                                      account.accountId,
+                                      account.status
+                                    )
+                                  }
+                                  disabled={
+                                    updateStatusMutation.isPending ||
+                                    isCurrentUser
+                                  }
+                                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                    account.status === "ACTIVE"
+                                      ? "bg-brand-600 dark:bg-brand-500 border-brand-700 dark:border-brand-600"
+                                      : "bg-gray-300 dark:bg-gray-600 border-gray-400 dark:border-gray-500"
+                                  }`}
+                                  role="switch"
+                                  aria-checked={account.status === "ACTIVE"}
+                                  aria-label={`Toggle ${account.email} status`}
+                                >
+                                  <span
+                                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                      account.status === "ACTIVE"
+                                        ? "translate-x-5"
+                                        : "translate-x-0"
+                                    }`}
+                                  />
+                                </button>
+                              )}
+                              {/* Status Badge */}
+                              <span
+                                className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                                  account.status === "ACTIVE"
+                                    ? "bg-success-100 text-success-800 dark:bg-success-950 dark:text-success-400 border-success-200 dark:border-success-900"
+                                    : account.status === "PASSIVE"
+                                    ? "bg-warning-100 text-warning-800 dark:bg-warning-950 dark:text-warning-400 border-warning-200 dark:border-warning-900"
+                                    : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700"
+                                }`}
+                                title={getStatusTooltip(account)}
+                              >
+                                {account.status}
+                              </span>
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                            {new Date(account.createdAt).toLocaleDateString('tr-TR', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                            })}
+                            {new Date(account.createdAt).toLocaleDateString(
+                              "tr-TR",
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              }
+                            )}
                           </td>
                           <td className="px-6 py-4">
                             {account.startAt || account.endAt ? (
                               <div className="text-sm text-gray-600 dark:text-gray-400">
                                 {account.startAt && (
                                   <div className="mb-1">
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">Başlangıç: </span>
-                                    <span>{new Date(account.startAt).toLocaleDateString('tr-TR', {
-                                      year: 'numeric',
-                                      month: 'short',
-                                      day: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })}</span>
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">
+                                      Başlangıç:{" "}
+                                    </span>
+                                    <span>
+                                      {new Date(
+                                        account.startAt
+                                      ).toLocaleDateString("tr-TR", {
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </span>
                                   </div>
                                 )}
                                 {account.endAt && (
                                   <div>
-                                    <span className="font-medium text-gray-700 dark:text-gray-300">Bitiş: </span>
-                                    <span>{new Date(account.endAt).toLocaleDateString('tr-TR', {
-                                      year: 'numeric',
-                                      month: 'short',
-                                      day: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })}</span>
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">
+                                      Bitiş:{" "}
+                                    </span>
+                                    <span>
+                                      {new Date(
+                                        account.endAt
+                                      ).toLocaleDateString("tr-TR", {
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </span>
                                   </div>
                                 )}
                               </div>
                             ) : (
-                              <span className="text-sm text-gray-400 dark:text-gray-500 italic">Süresiz</span>
+                              <span className="text-sm text-gray-400 dark:text-gray-500 italic">
+                                Süresiz
+                              </span>
                             )}
                           </td>
                           <td className="px-6 py-4">
@@ -466,16 +631,22 @@ export const WorkspaceAccounts = () => {
                               </button>
 
                               {/* Remove Button */}
-                              {account.status === 'ACTIVE' && !isCurrentUser && (
-                                <button
-                                  onClick={() => handleRemoveAccount(account.accountId, account.email)}
-                                  disabled={removeMutation.isPending}
-                                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-error-700 dark:text-error-400 bg-error-50 dark:bg-error-950 border border-error-200 dark:border-error-900 rounded-lg hover:bg-error-100 dark:hover:bg-error-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5 mr-1" />
-                                  Remove
-                                </button>
-                              )}
+                              {account.status === "ACTIVE" &&
+                                !isCurrentUser && (
+                                  <button
+                                    onClick={() =>
+                                      handleRemoveAccount(
+                                        account.accountId,
+                                        account.email
+                                      )
+                                    }
+                                    disabled={removeMutation.isPending}
+                                    className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-error-700 dark:text-error-400 bg-error-50 dark:bg-error-950 border border-error-200 dark:border-error-900 rounded-lg hover:bg-error-100 dark:hover:bg-error-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                    Remove
+                                  </button>
+                                )}
                             </div>
                           </td>
                         </tr>
@@ -491,9 +662,16 @@ export const WorkspaceAccounts = () => {
           {data.meta && (
             <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between">
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                Showing <span className="font-medium">{(data.meta.page - 1) * data.meta.limit + 1}</span> to{' '}
-                <span className="font-medium">{Math.min(data.meta.page * data.meta.limit, data.meta.total)}</span> of{' '}
-                <span className="font-medium">{data.meta.total}</span> results
+                Showing{" "}
+                <span className="font-medium">
+                  {(data.meta.page - 1) * data.meta.limit + 1}
+                </span>{" "}
+                to{" "}
+                <span className="font-medium">
+                  {Math.min(data.meta.page * data.meta.limit, data.meta.total)}
+                </span>{" "}
+                of <span className="font-medium">{data.meta.total}</span>{" "}
+                results
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -518,11 +696,19 @@ export const WorkspaceAccounts = () => {
                   <select
                     aria-label="Items per page"
                     value={filters.limit}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, page: 1, limit: Number(e.target.value) }))}
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        page: 1,
+                        limit: Number(e.target.value),
+                      }))
+                    }
                     className="h-8 appearance-none pr-8 pl-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400"
                   >
-                    {[1,3,5,10,20,50,100].map((opt) => (
-                      <option key={opt} value={opt}>{opt} / page</option>
+                    {[1, 3, 5, 10, 20, 50, 100].map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt} / page
+                      </option>
                     ))}
                   </select>
                   <ChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -535,7 +721,9 @@ export const WorkspaceAccounts = () => {
       {/* Remove Confirmation Dialog */}
       <ConfirmDialog
         isOpen={removeConfirm.isOpen}
-        onClose={() => setRemoveConfirm({ isOpen: false, accountId: '', email: '' })}
+        onClose={() =>
+          setRemoveConfirm({ isOpen: false, accountId: "", email: "" })
+        }
         onConfirm={handleConfirmRemove}
         title="Remove Member"
         message={`Are you sure you want to remove ${removeConfirm.email} from this workspace?`}
@@ -546,4 +734,3 @@ export const WorkspaceAccounts = () => {
     </>
   );
 };
-

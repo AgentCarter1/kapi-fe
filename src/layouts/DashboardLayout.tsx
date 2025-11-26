@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Settings, Menu } from "lucide-react";
+import { Settings, Menu, AlertTriangle } from "lucide-react";
 import { Sidebar } from "../components/Sidebar";
 import { WorkspaceSelector } from "../components/WorkspaceSelector";
 import { ProfileDropdown } from "../components/ProfileDropdown";
@@ -9,7 +9,9 @@ import WorkspaceManagementDialog from "../features/workspace/components/Workspac
 import { SidebarProvider, useSidebar } from "../context/SidebarContext";
 import { getAccountSelf } from "../features/account/api/accountApi";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { setUser } from "../store/slices/authSlice";
+import { setUser, setCurrentWorkspace } from "../store/slices/authSlice";
+import { getWorkspaces } from "../api/endpoints/workspaces";
+import toast from "react-hot-toast";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -18,9 +20,18 @@ interface DashboardLayoutProps {
 const LayoutContent: React.FC<DashboardLayoutProps> = ({ children }) => {
   const dispatch = useAppDispatch();
   const currentUser = useAppSelector((state) => state.auth.user);
+  const currentWorkspace = useAppSelector(
+    (state) => state.auth.currentWorkspace
+  );
   const [isWorkspaceManagementOpen, setIsWorkspaceManagementOpen] =
     useState(false);
   const { isExpanded, isHovered, toggleMobile } = useSidebar();
+
+  // Fetch workspaces to check for default workspace
+  const { data: workspaces } = useQuery({
+    queryKey: ["account-workspaces"],
+    queryFn: getWorkspaces,
+  });
 
   // Fetch user profile
   const { data: accountData } = useQuery({
@@ -58,6 +69,87 @@ const LayoutContent: React.FC<DashboardLayoutProps> = ({ children }) => {
       dispatch(setUser(nextUser));
     }
   }, [accountData, currentUser, dispatch]);
+
+  // Check if current workspace is PASSIVE and redirect to default
+  // IMPORTANT: This only sets current workspace, does NOT change default workspace
+  useEffect(() => {
+    if (
+      currentWorkspace &&
+      currentWorkspace.status === "PASSIVE" &&
+      workspaces &&
+      workspaces.length > 0
+    ) {
+      // Step 1: Check if default workspace is ACTIVE
+      const defaultWorkspace = workspaces.find((w) => w.isDefault);
+
+      // Step 2: Check if current workspace is the default workspace
+      const isCurrentWorkspaceDefault =
+        currentWorkspace.workspaceId === defaultWorkspace?.workspaceId;
+
+      let targetWorkspace = null;
+
+      if (defaultWorkspace && defaultWorkspace.status === "ACTIVE") {
+        // Default workspace is ACTIVE - use it (don't change default)
+        targetWorkspace = defaultWorkspace;
+      } else if (
+        defaultWorkspace &&
+        defaultWorkspace.status === "PASSIVE" &&
+        isCurrentWorkspaceDefault
+      ) {
+        // Step 3: Current workspace IS the default workspace AND it's PASSIVE
+        // Find primaryOwner's first ACTIVE workspace (but don't change default here)
+        targetWorkspace = workspaces.find(
+          (w) => w.status === "ACTIVE" && w.accountType === "primaryOwner"
+        );
+
+        if (!targetWorkspace) {
+          // No primaryOwner ACTIVE workspace - find any ACTIVE workspace
+          targetWorkspace = workspaces.find((w) => w.status === "ACTIVE");
+        }
+      } else if (
+        defaultWorkspace &&
+        defaultWorkspace.status === "PASSIVE" &&
+        !isCurrentWorkspaceDefault
+      ) {
+        // Step 4: Current workspace is NOT the default workspace, but default is PASSIVE
+        // Find primaryOwner's first ACTIVE workspace (don't change default)
+        targetWorkspace = workspaces.find(
+          (w) => w.status === "ACTIVE" && w.accountType === "primaryOwner"
+        );
+
+        if (!targetWorkspace) {
+          // No primaryOwner ACTIVE workspace - find any ACTIVE workspace
+          targetWorkspace = workspaces.find((w) => w.status === "ACTIVE");
+        }
+      } else {
+        // No default workspace - find primaryOwner's first ACTIVE workspace
+        targetWorkspace = workspaces.find(
+          (w) => w.status === "ACTIVE" && w.accountType === "primaryOwner"
+        );
+
+        if (!targetWorkspace) {
+          // No primaryOwner ACTIVE workspace - find any ACTIVE workspace
+          targetWorkspace = workspaces.find((w) => w.status === "ACTIVE");
+        }
+      }
+
+      if (
+        targetWorkspace &&
+        targetWorkspace.workspaceId !== currentWorkspace.workspaceId
+      ) {
+        dispatch(setCurrentWorkspace(targetWorkspace));
+        toast.error(
+          "Bu workspace'de pasif durumdasınız. Aktif bir workspace'e yönlendirildiniz."
+        );
+      } else if (!targetWorkspace) {
+        toast.error(
+          "Bu workspace'de pasif durumdasınız. Aktif bir workspace bulunamadı."
+        );
+      }
+    }
+  }, [currentWorkspace, workspaces, dispatch]);
+
+  const isPassive = currentWorkspace?.status === "PASSIVE";
 
   return (
     <div className="min-h-screen xl:flex">
@@ -106,6 +198,24 @@ const LayoutContent: React.FC<DashboardLayoutProps> = ({ children }) => {
             </div>
           </div>
         </header>
+
+        {/* Passive Workspace Warning Banner */}
+        {isPassive && (
+          <div className="bg-warning-50 dark:bg-warning-950/30 border-b border-warning-200 dark:border-warning-900 px-4 py-3">
+            <div className="max-w-screen-2xl mx-auto flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-warning-600 dark:text-warning-400 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-warning-800 dark:text-warning-300">
+                  Bu workspace'de pasif durumdasınız. İşlem yapamazsınız.
+                </p>
+                <p className="text-xs text-warning-700 dark:text-warning-400 mt-1">
+                  Lütfen workspace yönetiminden aktif bir workspace seçin veya
+                  default workspace'inize geçin.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Content */}
         <main className="p-4 mx-auto max-w-screen-2xl md:p-6 bg-gray-50 dark:bg-gray-950 min-h-screen">

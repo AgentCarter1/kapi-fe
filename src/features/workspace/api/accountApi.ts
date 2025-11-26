@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   removeAccountFromWorkspace,
+  updateAccountWorkspaceStatus,
   getAccountHistory,
   type AccountHistory,
 } from "../../../api/endpoints/workspaceAccounts";
@@ -19,6 +20,27 @@ export const useRemoveAccount = (workspaceId: string) => {
         queryKey: ["workspace-accounts", workspaceId],
       });
       queryClient.invalidateQueries({ queryKey: ['workspace-license', 'status', workspaceId] });
+    },
+  });
+};
+
+/**
+ * React Query mutation hook for updating account workspace status
+ */
+export const useUpdateAccountWorkspaceStatus = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    { accountId: string; workspaceId: string; status: string },
+    Error,
+    { accountId: string; status: 'ACTIVE' | 'PASSIVE' }
+  >({
+    mutationFn: ({ accountId, status }) =>
+      updateAccountWorkspaceStatus(workspaceId, accountId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["workspace-accounts", workspaceId],
+      });
     },
   });
 };
